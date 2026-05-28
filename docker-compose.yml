@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Backend API Django
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: petcare-backend
+    restart: always
+    environment:
+      # Configuraciones inyectables vía Dokploy
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=${DATABASE_URL}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - SECURE_SSL_REDIRECT=True
+    # Exponemos el puerto solo de manera interna
+    # Dokploy se encargará de rutear `bpetcare.irissoftware.lat` hacia este contenedor en el puerto 8000
+    expose:
+      - "8000"
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
+
+  # Frontend de Clientes (Propietarios)
+  frontend-owner:
+    build:
+      context: ./frontend1
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
+    container_name: petcare-frontend-owner
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
+    # Dokploy ruteará `f1.irissoftware.lat` hacia el puerto 80 de este contenedor
+    expose:
+      - "80"
+
+  # Frontend del Personal Clínico
+  frontend-staff:
+    build:
+      context: ./frontend2
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
+    container_name: petcare-frontend-staff
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
+    # Dokploy ruteará `f2.irissoftware.lat` hacia el puerto 80 de este contenedor
+    expose:
+      - "80"
