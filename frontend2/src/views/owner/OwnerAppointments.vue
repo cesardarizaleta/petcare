@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -8,6 +8,18 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchProfile(),
+        appStore.fetchPets(),
+        appStore.fetchAppointments()
+      ]);
+    } catch (err) {
+      console.error('Error fetching owner appointments data:', err);
+    }
+  });
   const activeFilter = ref('all');
 
   const filteredAppointments = computed(() => {

@@ -1,11 +1,20 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
+
+onMounted(async () => {
+  try {
+    await appStore.fetchRequisitions();
+  } catch (err) {
+    console.error('Error fetching requisitions in RequestDashboard:', err);
+  }
+});
+
 const solicitudes = computed(() => appStore.requisitions);
 const filtroEstado = ref('Todos');
 

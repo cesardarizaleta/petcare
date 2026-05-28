@@ -1,5 +1,5 @@
 <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatCard from '@/components/shared/StatCard.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
@@ -17,6 +17,18 @@
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchProfile(),
+        appStore.fetchPets(),
+        appStore.fetchAppointments(),
+      ]);
+    } catch (err) {
+      console.error('Error fetching owner dashboard data:', err);
+    }
+  });
   const currentOwner = computed(() => appStore.currentOwner);
   const ownerPets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
   const ownerAppointments = computed(() =>

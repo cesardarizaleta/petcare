@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -7,6 +7,19 @@
   import { formatDate, getOwnerAppointments, getOwnerPets, getPet } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchOwners(),
+        appStore.fetchPets(),
+        appStore.fetchAppointments(),
+      ]);
+    } catch (err) {
+      console.error('Error fetching OwnersSearch data:', err);
+    }
+  });
+
   const query = ref('');
 
   const filteredOwners = computed(() =>

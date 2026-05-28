@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, watch } from 'vue';
+  import { ref, watch, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -7,6 +7,15 @@
   import { formatDate } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchAppointmentsToday();
+    } catch (err) {
+      console.error('Error fetching today appointments in ClinicalRecords:', err);
+    }
+  });
+
   const petIdInput = ref('');
   const medicalRecord = ref(null);
   const vaccineHistory = ref([]);

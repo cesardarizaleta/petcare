@@ -1,5 +1,5 @@
 <script setup>
-  import { reactive, ref } from 'vue';
+  import { reactive, ref, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
@@ -9,6 +9,14 @@
   const toastStore = useToastStore();
   const loading = ref(false);
   const dewormingHistory = ref([]);
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchAppointmentsToday();
+    } catch (err) {
+      console.error('Error fetching today appointments in DewormingManager:', err);
+    }
+  });
 
   const form = reactive({
     petId: '',

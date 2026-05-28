@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { useAppStore } from '@/stores/useAppStore';
@@ -7,6 +7,15 @@ import { formatMoney } from '@/lib/petcare';
 import { evaluateProductAlertState } from '@/lib/inventory';
 
 const appStore = useAppStore();
+
+onMounted(async () => {
+  try {
+    await appStore.fetchInventory();
+  } catch (err) {
+    console.error('Error fetching inventory in catalog:', err);
+  }
+});
+
 const inventory = computed(() => appStore.inventory);
 
 const formatUnitCost = (value) =>

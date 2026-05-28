@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import { useToastStore } from '@/stores/useToastStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
@@ -9,6 +9,14 @@ import { formatMoney } from '@/lib/petcare';
 const appStore = useAppStore();
 const toastStore = useToastStore();
 
+onMounted(async () => {
+  try {
+    await appStore.fetchInventory();
+  } catch (err) {
+    console.error('Error fetching inventory in supply requisition:', err);
+  }
+});
+
 const listaInsumos = computed(() => appStore.inventory);
 
 const form = ref({
@@ -16,10 +24,20 @@ const form = ref({
   quantity: 1,
 });
 
+watch(
+  listaInsumos,
+  (insumos) => {
+    if (insumos.length && !form.value.insumoId) {
+      form.value.insumoId = insumos[0].id;
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 const itemsSolicitados = ref([]);
 
 const getSupplyById = (id) =>
-  listaInsumos.value.find((insumo) => Number(insumo.id) === Number(id));
+  listaInsumos.value.find((insumo) => String(insumo.id) === String(id));
 
 const getUnitCost = (supply) => (supply ? supply.unitCost ?? 0 : 0);
 
@@ -29,9 +47,9 @@ const formatUnitCost = (value) =>
 const agregarInsumoALista = () => {
   if (!form.value.insumoId || form.value.quantity < 1) return;
 
-  const id = Number(form.value.insumoId);
+  const id = String(form.value.insumoId);
   const cantidad = Number(form.value.quantity);
-  const existe = itemsSolicitados.value.find((item) => item.insumoId === id);
+  const existe = itemsSolicitados.value.find((item) => String(item.insumoId) === String(id));
 
   if (existe) {
     existe.quantity += cantidad;
@@ -39,7 +57,12 @@ const agregarInsumoALista = () => {
     itemsSolicitados.value.push({ insumoId: id, quantity: cantidad });
   }
 
-  form.value.insumoId = '';
+  // Pre-select first item again from catalog after reset
+  if (listaInsumos.value.length) {
+    form.value.insumoId = listaInsumos.value[0].id;
+  } else {
+    form.value.insumoId = '';
+  }
   form.value.quantity = 1;
 };
 

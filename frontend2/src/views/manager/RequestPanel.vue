@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import { useToastStore } from '@/stores/useToastStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
@@ -8,6 +8,17 @@ import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
 const toastStore = useToastStore();
+
+onMounted(async () => {
+  try {
+    await Promise.all([
+      appStore.fetchRequisitions(),
+      appStore.fetchInventory()
+    ]);
+  } catch (err) {
+    console.error('Error fetching data in request panel:', err);
+  }
+});
 
 // 1. Relación reactiva de solicitudes en el Store
 const solicitudes = computed(() => appStore.requisitions);
@@ -23,7 +34,7 @@ const formatTotal = (value) =>
 
 // Auxiliar para obtener el nombre del insumo original desde el inventario
 const obtenerNombreInsumo = (insumoId) => {
-  const insumo = appStore.inventory.find(i => Number(i.id) === Number(insumoId));
+  const insumo = appStore.inventory.find(i => String(i.id) === String(insumoId));
   return insumo ? insumo.name : `Insumo ID #${insumoId}`;
 };
 

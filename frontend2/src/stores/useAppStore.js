@@ -207,20 +207,41 @@ export const useAppStore = defineStore('app', {
       return mappedOwner;
     },
 
+    async fetchOwners() {
+      try {
+        const res = await http.get('/api/v1/owners/');
+        const data = res.data;
+        const mappedOwners = data.map(owner => ({
+          id: owner.id,
+          name: `${owner.user.first_name} ${owner.user.last_name}`.trim() || owner.user.email,
+          email: owner.user.email,
+          phone: owner.phone || '',
+          address: owner.address || '',
+          createdAt: owner.created_at ? owner.created_at.slice(0, 10) : '',
+        }));
+        this.owners = mappedOwners;
+        return mappedOwners;
+      } catch (e) {
+        console.error('fetchOwners error:', e);
+        return [];
+      }
+    },
+
     async fetchPets() {
-      const res = await http.get('/api/v1/owners/me/pets/');
+      const endpoint = this.role === 'owner' ? '/api/v1/owners/me/pets/' : '/api/v1/pets/';
+      const res = await http.get(endpoint);
       const data = res.data;
       const mappedPets = data.map(pet => {
         const spec = (pet.species || '').toLowerCase();
         let species = 'other';
-        if (spec.includes('canin') || spec.includes('perr')) species = 'dog';
-        else if (spec.includes('felin') || spec.includes('gat')) species = 'cat';
-        else if (spec.includes('ave')) species = 'bird';
-        else if (spec.includes('conej')) species = 'rabbit';
+        if (spec.includes('canin') || spec.includes('perr') || spec.includes('dog')) species = 'dog';
+        else if (spec.includes('felin') || spec.includes('gat') || spec.includes('cat')) species = 'cat';
+        else if (spec.includes('ave') || spec.includes('bird')) species = 'bird';
+        else if (spec.includes('conej') || spec.includes('rabbit')) species = 'rabbit';
         
         return {
           id: pet.id,
-          ownerId: this.currentUserId,
+          ownerId: pet.owner?.id || pet.owner_id || this.currentUserId,
           name: pet.name,
           species,
           breed: pet.breed || 'Mestizo',
@@ -234,6 +255,7 @@ export const useAppStore = defineStore('app', {
       this.pets = mappedPets;
       return mappedPets;
     },
+
 
     async addPet(petData) {
       const speciesMap = {

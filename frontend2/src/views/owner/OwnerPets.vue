@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, reactive } from 'vue';
+  import { computed, reactive, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
@@ -15,6 +15,17 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchProfile(),
+        appStore.fetchPets(),
+      ]);
+    } catch (err) {
+      console.error('Error fetching owner pets data:', err);
+    }
+  });
   const pets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
 
   const form = reactive({

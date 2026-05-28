@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { useAppStore } from '@/stores/useAppStore';
@@ -16,14 +16,35 @@ const EMPTY_FORM = {
 const appStore = useAppStore();
 const toastStore = useToastStore();
 
+onMounted(async () => {
+  try {
+    await appStore.fetchInventory();
+  } catch (err) {
+    console.error('Error fetching inventory in RepositionStock:', err);
+  }
+});
+
 const today = new Date().toISOString().split('T')[0];
 const open = ref(true);
 const form = ref({ ...EMPTY_FORM });
 
 const listaInsumos = computed(() => appStore.inventory);
 
+watch(
+  listaInsumos,
+  (insumos) => {
+    if (insumos.length && !form.value.insumoId) {
+      form.value.insumoId = insumos[0].id;
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 const resetForm = () => {
   Object.assign(form.value, EMPTY_FORM);
+  if (listaInsumos.value.length) {
+    form.value.insumoId = listaInsumos.value[0].id;
+  }
 };
 
 const guardarEntrada = async () => {
@@ -52,7 +73,7 @@ const guardarEntrada = async () => {
       quantity: form.value.quantity,
     });
 
-    const insumo = listaInsumos.value.find((item) => item.id === form.value.insumoId);
+    const insumo = listaInsumos.value.find((item) => String(item.id) === String(form.value.insumoId));
 
     toastStore.push({
       title: 'Reposición registrada',

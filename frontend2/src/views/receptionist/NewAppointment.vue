@@ -1,18 +1,17 @@
 <script setup>
-  import { reactive, ref } from 'vue';
+  import { computed, reactive, ref, onMounted, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
   import { timeSlots, todayISO } from '@/lib/petcare';
-  import http from '@/lib/http';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
   const router = useRouter();
   const loading = ref(false);
-  const patients = ref([]);
-  const searchQuery = ref('');
+
+  const selectedOwnerId = ref('');
 
   const form = reactive({
     patientId: '',
@@ -22,17 +21,49 @@
     time: '09:00',
   });
 
-  async function searchPatients() {
-    if (!searchQuery.value || searchQuery.value.length < 2) return;
+  onMounted(async () => {
+    loading.value = true;
     try {
-      // Search patients by name via the backend
-      const res = await http.get('/api/v1/appointments/', { params: { search: searchQuery.value } });
-      // Extract unique patients from appointment responses
-      // For now, just populate from the appStore's known pets
-    } catch (e) {
-      console.error(e);
+      await Promise.all([
+        appStore.fetchOwners(),
+        appStore.fetchPets(),
+      ]);
+    } catch (err) {
+      console.error('Error fetching receptionist data in NewAppointment:', err);
+    } finally {
+      loading.value = false;
     }
-  }
+  });
+
+  watch(
+    () => appStore.owners,
+    (owners) => {
+      if (owners.length && !selectedOwnerId.value) {
+        selectedOwnerId.value = owners[0].id;
+      }
+    },
+    { immediate: true, deep: true }
+  );
+
+  const filteredPets = computed(() => {
+    return appStore.pets.filter(pet => String(pet.ownerId) === String(selectedOwnerId.value));
+  });
+
+  watch(
+    filteredPets,
+    (pets) => {
+      if (pets.length) {
+        // If current patientId is not in filtered pets, select first
+        const exists = pets.some(p => String(p.id) === String(form.patientId));
+        if (!exists) {
+          form.patientId = pets[0].id;
+        }
+      } else {
+        form.patientId = '';
+      }
+    },
+    { immediate: true, deep: true }
+  );
 
   async function saveAppointment() {
     if (!form.patientId || !form.reason) {
@@ -73,26 +104,42 @@
       <div class="input-row">
         <div class="input-grid">
           <label class="field">
-            <span>ID del Paciente (mascota)</span>
-            <input v-model="form.patientId" class="input" type="number" placeholder="Ej: 1" />
+            <span>Seleccionar Propietario *</span>
+            <select v-model="selectedOwnerId" class="select" required>
+              <option value="" disabled>Seleccione un propietario...</option>
+              <option v-for="owner in appStore.owners" :key="owner.id" :value="owner.id">
+                {{ owner.name }} ({{ owner.email }})
+              </option>
+            </select>
           </label>
           <label class="field">
-            <span>Motivo de la consulta *</span>
-            <input v-model="form.reason" class="input" type="text" placeholder="Control anual" />
+            <span>Seleccionar Mascota (Paciente) *</span>
+            <select v-model="form.patientId" class="select" required>
+              <option value="" disabled>Seleccione una mascota...</option>
+              <option v-for="pet in filteredPets" :key="pet.id" :value="pet.id">
+                {{ pet.name }} · {{ pet.breed }} ({{ pet.species }})
+              </option>
+            </select>
           </label>
         </div>
 
         <div class="input-grid">
           <label class="field">
-            <span>Fecha</span>
-            <input v-model="form.date" class="input" type="date" />
+            <span>Motivo de la consulta *</span>
+            <input v-model="form.reason" class="input" type="text" placeholder="Control anual / Consulta" required />
           </label>
-          <label class="field">
-            <span>Hora</span>
-            <select v-model="form.time" class="select">
-              <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
-            </select>
-          </label>
+          <div class="input-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <label class="field">
+              <span>Fecha</span>
+              <input v-model="form.date" class="input" type="date" />
+            </label>
+            <label class="field">
+              <span>Hora</span>
+              <select v-model="form.time" class="select">
+                <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         <label class="field">

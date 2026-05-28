@@ -1,5 +1,5 @@
 <script setup>
-  import { reactive, watch } from 'vue';
+  import { reactive, watch, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
@@ -14,6 +14,14 @@
     address: '',
   });
 
+  onMounted(async () => {
+    try {
+      await appStore.fetchProfile();
+    } catch (err) {
+      console.error('Error fetching owner profile:', err);
+    }
+  });
+
   watch(
     () => appStore.currentOwner,
     (owner) => {
@@ -26,19 +34,27 @@
     { immediate: true }
   );
 
-  function saveProfile() {
-    appStore.updateOwner({
-      ...appStore.currentOwner,
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      address: form.address,
-    });
-    toastStore.push({
-      title: 'Perfil actualizado',
-      description: 'Los datos del propietario fueron guardados.',
-      type: 'success',
-    });
+  async function saveProfile() {
+    try {
+      await appStore.updateProfile({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+      });
+      toastStore.push({
+        title: 'Perfil actualizado',
+        description: 'Los datos del propietario fueron guardados en el servidor.',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error(err);
+      toastStore.push({
+        title: 'Error al guardar perfil',
+        description: 'No se pudieron actualizar los datos en el servidor.',
+        type: 'error',
+      });
+    }
   }
 </script>
 
