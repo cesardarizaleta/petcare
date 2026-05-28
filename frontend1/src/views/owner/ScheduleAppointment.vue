@@ -1,24 +1,43 @@
 <script setup>
-  import { computed, reactive, ref } from 'vue';
+  import { computed, reactive, ref, onMounted, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { formatDate, getOwnerPets, timeSlots } from '@/lib/petcare';
+  import { formatDate, getOwnerPets, timeSlots, getTodayShortDate } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
   const router = useRouter();
   const step = ref(1);
+  
+  onMounted(async () => {
+    try {
+      await appStore.fetchPets();
+    } catch (err) {
+      console.error('Error loading schedule appointment pets:', err);
+    }
+  });
+
   const pets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
 
   const form = reactive({
-    petId: pets.value[0]?.id || '',
-    date: '2026-05-12',
+    petId: '',
+    date: getTodayShortDate(),
     time: '09:00',
     reason: '',
     notes: '',
   });
+
+  watch(
+    pets,
+    (newPets) => {
+      if (newPets.length && !form.petId) {
+        form.petId = newPets[0].id;
+      }
+    },
+    { immediate: true }
+  );
 
   const occupiedSlots = computed(() => {
     return appStore.appointments

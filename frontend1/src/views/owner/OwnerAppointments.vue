@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref, reactive, onMounted } from 'vue';
+  import { computed, ref, reactive, onMounted, watch } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import Modal from '@/components/shared/Modal.vue';
@@ -30,6 +30,16 @@
     time: '09:00',
     reason: '',
   });
+
+  watch(
+    pets,
+    (newPets) => {
+      if (newPets.length && !form.petId) {
+        form.petId = newPets[0].id;
+      }
+    },
+    { immediate: true }
+  );
 
   function scheduleAppointment() {
     if (!form.petId || !form.reason || !form.date) {

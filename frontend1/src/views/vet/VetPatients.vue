@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -16,6 +16,17 @@
 
   const appStore = useAppStore();
   const selectedAppointmentId = ref('');
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchPets(),
+        appStore.fetchAppointments()
+      ]);
+    } catch (err) {
+      console.error('Error loading vet patients data:', err);
+    }
+  });
 
   const currentVetId = computed(() => appStore.currentUserId || 'v1');
   const patients = computed(() =>

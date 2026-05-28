@@ -34,19 +34,26 @@
 
   const availableBreeds = computed(() => breedsBySpecies[form.species] || ['Otro']);
 
-  onMounted(() => {
-    if (isEditing.value) {
-      const pet = getPet(appStore.pets, route.params.id);
-      if (pet) {
-        form.name = pet.name || '';
-        form.species = pet.species || 'dog';
-        form.breed = pet.breed || availableBreeds.value[0];
-        form.sex = pet.sex || 'M';
-        form.birthDate = pet.birthDate || '';
-        form.weight = pet.weight || '';
-        form.color = pet.color || '';
-        form.notes = pet.notes || '';
+  onMounted(async () => {
+    try {
+      if (isEditing.value) {
+        if (!appStore.pets.length) {
+          await appStore.fetchPets();
+        }
+        const pet = getPet(appStore.pets, route.params.id);
+        if (pet) {
+          form.name = pet.name || '';
+          form.species = pet.species || 'dog';
+          form.breed = pet.breed || availableBreeds.value[0];
+          form.sex = pet.sex || 'M';
+          form.birthDate = pet.birthDate || '';
+          form.weight = pet.weight || '';
+          form.color = pet.color || '';
+          form.notes = pet.notes || '';
+        }
       }
+    } catch (err) {
+      console.error('Error loading pet form details:', err);
     }
   });
 

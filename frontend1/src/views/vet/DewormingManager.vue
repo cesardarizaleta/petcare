@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, reactive } from 'vue';
+  import { computed, reactive, onMounted, watch } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
@@ -8,13 +8,31 @@
   const appStore = useAppStore();
   const toastStore = useToastStore();
   const form = reactive({
-    petId: appStore.pets[0]?.id || '',
+    petId: '',
     product: '',
     date: getTodayShortDate(),
     nextDate: '2026-06-08',
     weight: '',
     notes: '',
   });
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchPets();
+    } catch (err) {
+      console.error('Error loading deworming manager pets:', err);
+    }
+  });
+
+  watch(
+    () => appStore.pets,
+    (pets) => {
+      if (pets.length && !form.petId) {
+        form.petId = pets[0].id;
+      }
+    },
+    { immediate: true, deep: true }
+  );
 
   const dewormings = computed(() =>
     appStore.dewormings.slice().sort((left, right) => `${right.date}`.localeCompare(left.date))

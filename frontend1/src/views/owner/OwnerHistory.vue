@@ -1,5 +1,5 @@
 <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
@@ -14,6 +14,18 @@
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchProfile(),
+        appStore.fetchPets(),
+        appStore.fetchAppointments()
+      ]);
+    } catch (err) {
+      console.error('Error loading owner history data:', err);
+    }
+  });
   const pets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
   const consultations = computed(() =>
     pets.value.flatMap((pet) => appStore.consultations.filter((item) => item.petId === pet.id))

@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, reactive, ref } from 'vue';
+  import { computed, reactive, ref, onMounted, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -19,8 +19,8 @@
   );
 
   const form = reactive({
-    appointmentId: todayAppointments.value[0]?.id || '',
-    petId: appStore.pets[0]?.id || '',
+    appointmentId: '',
+    petId: '',
     weight: '',
     temperature: '',
     symptoms: '',
@@ -30,6 +30,37 @@
     followUpDate: '',
     notes: '',
   });
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchPets(),
+        appStore.fetchAppointments()
+      ]);
+    } catch (err) {
+      console.error('Error fetching register consultation form data:', err);
+    }
+  });
+
+  watch(
+    todayAppointments,
+    (appt) => {
+      if (appt.length && !form.appointmentId) {
+        form.appointmentId = appt[0].id;
+      }
+    },
+    { immediate: true }
+  );
+
+  watch(
+    () => appStore.pets,
+    (pets) => {
+      if (pets.length && !form.petId) {
+        form.petId = pets[0].id;
+      }
+    },
+    { immediate: true, deep: true }
+  );
 
   async function saveConsultation() {
     let appointmentId = form.appointmentId;

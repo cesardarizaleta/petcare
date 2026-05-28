@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, reactive, watch } from 'vue';
+  import { computed, reactive, watch, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -10,9 +10,8 @@
   const toastStore = useToastStore();
   const router = useRouter();
 
-  const ownerId = reactive({ value: appStore.owners[0]?.id || '' });
   const form = reactive({
-    ownerId: ownerId.value,
+    ownerId: '',
     petId: '',
     vetId: appStore.vets[0]?.id || 'v1',
     date: getTodayShortDate(),
@@ -22,6 +21,27 @@
     reason: '',
     notes: '',
   });
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchOwners(),
+        appStore.fetchPets()
+      ]);
+    } catch (err) {
+      console.error('Error fetching new appointment data:', err);
+    }
+  });
+
+  watch(
+    () => appStore.owners,
+    (owners) => {
+      if (owners.length && !form.ownerId) {
+        form.ownerId = owners[0].id;
+      }
+    },
+    { immediate: true, deep: true }
+  );
 
   const ownerPets = computed(() => appStore.pets.filter((pet) => pet.ownerId === form.ownerId));
 

@@ -18,11 +18,20 @@
 
   const selectedPet = ref(null);
 
-  onMounted(() => {
-    const pet = getPet(appStore.pets, route.params.id);
-    if (pet) {
-      selectedPet.value = pet;
-    } else {
+  onMounted(async () => {
+    try {
+      if (!appStore.pets.length) {
+        await appStore.fetchPets();
+      }
+      const pet = getPet(appStore.pets, route.params.id);
+      if (pet) {
+        selectedPet.value = pet;
+        appStore.fetchMedicalRecord(pet.id).catch(() => {});
+      } else {
+        router.push('/portal/pets');
+      }
+    } catch (err) {
+      console.error('Error loading pet details page:', err);
       router.push('/portal/pets');
     }
   });

@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted, watch } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -8,7 +8,43 @@
   import { formatDate, getPetConsultations, getPetVaccines, getPetDewormings } from '@/lib/petcare';
 
   const appStore = useAppStore();
-  const selectedPetId = ref(appStore.pets[0]?.id || '');
+  const selectedPetId = ref('');
+
+  onMounted(async () => {
+    try {
+      await Promise.all([
+        appStore.fetchPets(),
+        appStore.fetchAppointments()
+      ]);
+    } catch (err) {
+      console.error('Error loading clinical records page data:', err);
+    }
+  });
+
+  watch(
+    () => appStore.pets,
+    (pets) => {
+      if (pets.length && !selectedPetId.value) {
+        selectedPetId.value = pets[0].id;
+      }
+    },
+    { immediate: true, deep: true }
+  );
+
+  watch(
+    selectedPetId,
+    async (newPetId) => {
+      if (newPetId) {
+        try {
+          await appStore.fetchMedicalRecord(newPetId);
+        } catch (err) {
+          console.error(`Error loading medical record for pet ${newPetId}:`, err);
+        }
+      }
+    },
+    { immediate: true }
+  );
+
   const selectedPet = computed(
     () => appStore.pets.find((pet) => pet.id === selectedPetId.value) || null
   );
