@@ -20,7 +20,7 @@ services:
       - SECURE_SSL_REDIRECT=False
     networks:
       - dokploy-network
-    command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
+    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.petcare-backend.rule=Host(`bpetcare.irissoftware.lat`)"
