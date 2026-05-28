@@ -6,4 +6,6 @@ urlpatterns = [
     path('<int:pet_id>/medical-record/', views.pet_medical_record, name='pet-medical-record'),
     path('<int:pet_id>/vaccination-plan/schedule/', views.pet_vaccination_schedule, name='pet-vaccination-schedule'),
     path('<int:pet_id>/vaccination-events/', views.pet_vaccination_events, name='pet-vaccination-events'),
+    path('', views.PatientListAPIView.as_view(), name='patient-list'),
+    path('<int:pk>/', views.PatientDetailUpdateAPIView.as_view(), name='patient-detail-update'),
 ]

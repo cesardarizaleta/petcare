@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref, reactive } from 'vue';
+  import { computed, ref, reactive, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import Modal from '@/components/shared/Modal.vue';
@@ -10,6 +10,15 @@
   const appStore = useAppStore();
   const toastStore = useToastStore();
   const activeFilter = ref('all');
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchPets();
+      await appStore.fetchAppointments();
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+    }
+  });
   
   // Schedule Modal
   const showNewAppointmentModal = ref(false);

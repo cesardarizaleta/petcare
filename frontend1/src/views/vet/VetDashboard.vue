@@ -1,5 +1,5 @@
 <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatCard from '@/components/shared/StatCard.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
@@ -16,6 +16,16 @@
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchPets();
+      await appStore.fetchAppointments();
+    } catch (err) {
+      console.error('Error loading veterinarian dashboard data:', err);
+    }
+  });
+
   const currentVetId = computed(() => appStore.currentUserId || 'v1');
   const vetAppointments = computed(() =>
     getAppointmentsByVet(appStore.appointments, currentVetId.value)

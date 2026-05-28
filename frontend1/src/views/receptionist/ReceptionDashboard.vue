@@ -1,5 +1,5 @@
 <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatCard from '@/components/shared/StatCard.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
@@ -18,6 +18,17 @@
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
+
+  onMounted(async () => {
+    try {
+      await appStore.fetchOwners();
+      await appStore.fetchPets();
+      await appStore.fetchAppointments();
+    } catch (err) {
+      console.error('Error loading receptionist dashboard data:', err);
+    }
+  });
+
   const todayDate = computed(() => getTodayDate());
   const todayAppointments = computed(() => getTodayAppointments(appStore.appointments));
   const stats = computed(() => getAppointmentStats(todayAppointments.value));

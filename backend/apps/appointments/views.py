@@ -44,13 +44,16 @@ def _serialize_appointment(appt):
     if owner:
         owner_user = owner.user
         owner_name = f"{owner_user.first_name} {owner_user.last_name}".strip() or owner_user.email
+        owner_id = str(owner.pk)
     else:
         owner_name = ""
+        owner_id = None
 
     return {
         "id": appt.id,
         "patient_name": appt.patient.name,
         "owner_name": owner_name,
+        "owner_id": owner_id,
         "pet_id": appt.patient.id,
         "vet_id": vet_id,
         "vet_name": vet_name,

@@ -22,6 +22,7 @@
     try {
       await appStore.fetchProfile();
       await appStore.fetchPets();
+      await appStore.fetchAppointments();
     } catch (err) {
       console.error('Error loading dashboard data:', err);
     }

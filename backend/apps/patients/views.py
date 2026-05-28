@@ -4,8 +4,9 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 
+from apps.owners.serializers import PetSerializer
 from .models import Patient, ClinicalRecords, VaccinationPlan, VaccinationDewormingEvent
 
 
@@ -206,3 +207,20 @@ def pet_vaccination_events(request, pet_id):
         },
         status=status.HTTP_201_CREATED,
     )
+
+
+# ---------------------------------------------------------------------------
+# 5. Patient List & Detail Views
+# ---------------------------------------------------------------------------
+
+class PatientListAPIView(generics.ListAPIView):
+    queryset = Patient.objects.all()
+    serializer_class = PetSerializer
+    permission_classes = [AllowAny]
+
+
+class PatientDetailUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Patient.objects.all()
+    serializer_class = PetSerializer
+    permission_classes = [AllowAny]
+
