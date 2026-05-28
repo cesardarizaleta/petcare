@@ -186,13 +186,21 @@ def pet_vaccination_events(request, pet_id):
         defaults={"vet": None},
     )
 
+    applied_date = request.data.get("applied_date")
+    if not applied_date or applied_date == "":
+        applied_date = timezone.now().date()
+
+    next_due_date = request.data.get("next_due_date")
+    if not next_due_date or next_due_date == "":
+        next_due_date = None
+
     event = VaccinationDewormingEvent.objects.create(
         plan=plan,
         event_type=request.data.get("event_type", "VACCINE"),
         dose=request.data.get("dose", ""),
-        applied_date=request.data.get("applied_date", timezone.now().date()),
+        applied_date=applied_date,
         sanitary_batch=request.data.get("sanitary_batch", ""),
-        next_due_date=request.data.get("next_due_date"),
+        next_due_date=next_due_date,
     )
 
     return Response(

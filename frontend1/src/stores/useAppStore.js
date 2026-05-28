@@ -481,9 +481,9 @@ export const useAppStore = defineStore('app', {
       const payload = {
         event_type: 'VACCINE',
         dose: vaccineData.name,
-        applied_date: vaccineData.date,
+        applied_date: vaccineData.date || null,
         sanitary_batch: vaccineData.lot || '',
-        next_due_date: vaccineData.nextDate,
+        next_due_date: vaccineData.nextDate || null,
       };
       
       const res = await http.post(`/api/v1/pets/${vaccineData.petId}/vaccination-events/`, payload);
@@ -505,9 +505,9 @@ export const useAppStore = defineStore('app', {
       const payload = {
         event_type: 'DEWORMING',
         dose: dewormingData.product,
-        applied_date: dewormingData.date,
+        applied_date: dewormingData.date || null,
         sanitary_batch: dewormingData.notes || '',
-        next_due_date: dewormingData.nextDate,
+        next_due_date: dewormingData.nextDate || null,
       };
       
       const res = await http.post(`/api/v1/pets/${dewormingData.petId}/vaccination-events/`, payload);
