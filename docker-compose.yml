@@ -17,7 +17,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DATABASE_URL=${DATABASE_URL}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - SECURE_SSL_REDIRECT=True
+      - SECURE_SSL_REDIRECT=False
     networks:
       - dokploy-network
     command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
