@@ -1,0 +1,51 @@
+# Dependencias de Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compilación de Frontend
+dist/
+dist-ssr/
+build/
+.next/
+out/
+.nuxt/
+.output/
+.vercel/
+
+# Entorno Virtual y Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Base de datos y secretos
+db.sqlite3
+*.db
+.env
+.env.*
+!.env.example
+*.log
+
+# Editor y sistema operativo
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store
+Thumbs.db
+
+# Cobertura y testing
+coverage/
+.nyc_output/
+.tox/
+.pytest_cache/

@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(194, 167, 105, 0.12), transparent 32%),
+    radial-gradient(circle at top right, rgba(165, 186, 142, 0.14), transparent 28%),
+    linear-gradient(180deg, #fcfbf8 0%, #faf8f2 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(194, 167, 105, 0.08), transparent 28%),
+    radial-gradient(circle at 80% 10%, rgba(165, 186, 142, 0.12), transparent 22%),
+    linear-gradient(180deg, #fcfbf8 0%, #faf8f2 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.muted {
+  color: rgba(61, 61, 61, 0.68);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(194, 167, 105, 0.16);
+}

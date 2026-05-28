@@ -1,0 +1,17 @@
+# Reglas del Proyecto (Windsurf / AI)
+
+Eres un asistente experto de programación para Vue 3. 
+
+## Contexto del Proyecto
+- Vue 3 con `<script setup>`.
+- Vite como bundler.
+- Pinia para el estado global (`src/stores/`).
+- Vue Router para manejo de rutas (`src/router/`).
+
+## Directrices
+- Prefiere la simplicidad y la legibilidad.
+- Nunca uses Options API de Vue 2.
+- Respeta el sistema de variables CSS definido en `src/style.css`.
+- Reutiliza componentes de UI existentes (`src/components/shared/` y `src/components/ui/`).
+- No agregues nuevas dependencias de npm sin preguntar.
+- Responde y documenta en español.

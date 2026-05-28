@@ -1,0 +1,18 @@
+# Reglas del Proyecto (Antigravity)
+
+Eres un asistente experto de programación para Vue 3. 
+
+## Contexto del Proyecto
+- Vue 3 con `<script setup>`.
+- Vite como bundler.
+- Pinia para el estado global (`src/stores/`).
+- Vue Router para manejo de rutas (`src/router/`).
+
+## Directrices
+- Prefiere la simplicidad y la legibilidad. Ideal para programadores junior.
+- Nunca uses Options API de Vue 2.
+- Respeta el sistema de variables CSS definido en `src/styles/variables.css`.
+- Reutiliza componentes de UI existentes en `src/components/`.
+- Comenta las partes complejas del código en español para facilitar la comprensión.
+- No agregues nuevas dependencias sin preguntar.
+- Responde siempre en español.

@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #faf8f2;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: #ffffff;
+  --surface-soft: #f7f1e6;
+  --surface-muted: #f3f6f0;
+  --text: #3d3d3d;
+  --text-strong: #171717;
+  --border: rgba(194, 167, 105, 0.18);
+  --border-strong: rgba(194, 167, 105, 0.35);
+  --brand: #c2a769;
+  --brand-strong: #a8893f;
+  --sage: #a5ba8e;
+  --sage-strong: #73895d;
+  --cream: #f7f1e6;
+  --success: #4a6741;
+  --warning: #7d6430;
+  --danger: #b23c3c;
+  --shadow: 0 18px 50px rgba(28, 26, 20, 0.09);
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+  --sans: 'Montserrat', system-ui, sans-serif;
+
+  /* pesos de la tipografia */
+  --weight-regular: 400;
+  --weight-bold: 700;
+  --weight-black: 800;
+
+  /* tamaños de la tipografia */
+  --size-xs: 0.72rem;
+  --size-sm: 0.88rem;
+  --size-base: 1rem;
+  --size-card-title: 1.1rem;
+  --size-section-title: 1.35rem;
+  --size-lg: 1.8rem;
+}

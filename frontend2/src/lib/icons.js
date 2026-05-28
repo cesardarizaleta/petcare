@@ -1,0 +1,53 @@
+import {
+  Bird,
+  CalendarDays,
+  CalendarPlus,
+  CheckCircle2,
+  ClipboardCheck,
+  ClipboardList,
+  ClipboardPenLine,
+  Clock3,
+  Dog,
+  House,
+  Hourglass,
+  LayoutDashboard,
+  NotebookPen,
+  PawPrint,
+  Plus,
+  Rabbit,
+  Search,
+  Stethoscope,
+  Syringe,
+  UserRound,
+  Worm,
+  Cat,
+} from 'lucide-vue-next';
+
+export const iconRegistry = {
+  bird: Bird,
+  cat: Cat,
+  'calendar-days': CalendarDays,
+  'calendar-plus': CalendarPlus,
+  'check-circle-2': CheckCircle2,
+  'clipboard-check': ClipboardCheck,
+  'clipboard-list': ClipboardList,
+  'clipboard-pen-line': ClipboardPenLine,
+  'clock-3': Clock3,
+  dog: Dog,
+  house: House,
+  hourglass: Hourglass,
+  'layout-dashboard': LayoutDashboard,
+  'notebook-pen': NotebookPen,
+  'paw-print': PawPrint,
+  plus: Plus,
+  rabbit: Rabbit,
+  search: Search,
+  stethoscope: Stethoscope,
+  syringe: Syringe,
+  'user-round': UserRound,
+  worm: Worm,
+};
+
+export function resolveIcon(name) {
+  return iconRegistry[name] || iconRegistry['paw-print'];
+}

@@ -1,0 +1,21 @@
+# Reglas del Proyecto (Cursor)
+
+Eres un desarrollador senior experto en Vue 3 y frontend. En este proyecto debes adherirte a las siguientes reglas:
+
+## Stack Tecnológico
+- **Framework**: Vue 3 (Composition API siempre).
+- **Herramienta de build**: Vite.
+- **Rutas**: Vue Router.
+- **Estado**: Pinia.
+
+## Reglas de Código Vue
+1. **Composition API**: Usa siempre `<script setup>` para los componentes. Nunca uses la Options API.
+2. **Estilos**: Los componentes de UI reutilizables están en `src/components/`. Analiza los existentes antes de crear nuevos.
+3. No uses librerías externas para UI a menos que el usuario lo apruebe explícitamente; el proyecto tiene su propio sistema de diseño (CSS vanilla) en `src/style.css` basado en variables CSS (ej. `var(--brand)`, `var(--radius-md)`).
+4. El diseño y los bordes son ligeramente cuadrados por configuración, respeta los tokens del CSS global.
+
+## Estilo General
+- Escribe código limpio, modular y fácil de leer.
+- Utiliza ES Modules (`import`/`export`).
+- Si debes crear funciones compartidas, colócalas en `src/lib/` o `src/utils/`.
+- Mantén las respuestas y documentación en Español.
