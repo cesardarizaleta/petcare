@@ -1,5 +1,10 @@
 version: '3.8'
 
+# Definimos la red externa de Dokploy para que Traefik pueda comunicarse con nuestros contenedores
+networks:
+  dokploy-network:
+    external: true
+
 services:
   # Backend API Django
   backend:
@@ -9,16 +14,20 @@ services:
     container_name: petcare-backend
     restart: always
     environment:
-      # Configuraciones inyectables vía Dokploy
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - DATABASE_URL=${DATABASE_URL}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - SECURE_SSL_REDIRECT=True
-    # Exponemos el puerto solo de manera interna
-    # Dokploy se encargará de rutear `bpetcare.irissoftware.lat` hacia este contenedor en el puerto 8000
-    expose:
-      - "8000"
+    networks:
+      - dokploy-network
     command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.petcare-backend.rule=Host(`bpetcare.irissoftware.lat`)"
+      - "traefik.http.services.petcare-backend.loadbalancer.server.port=8000"
+      # Si Dokploy maneja SSL globalmente, estas siguientes dos líneas aseguran que use HTTPS
+      - "traefik.http.routers.petcare-backend.entrypoints=websecure"
+      - "traefik.http.routers.petcare-backend.tls.certresolver=letsencrypt"
 
   # Frontend de Clientes (Propietarios)
   frontend-owner:
@@ -29,11 +38,14 @@ services:
         - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
     container_name: petcare-frontend-owner
     restart: always
-    environment:
-      - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-    # Dokploy ruteará `f1.irissoftware.lat` hacia el puerto 80 de este contenedor
-    expose:
-      - "80"
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.petcare-frontend-owner.rule=Host(`f1.irissoftware.lat`)"
+      - "traefik.http.services.petcare-frontend-owner.loadbalancer.server.port=80"
+      - "traefik.http.routers.petcare-frontend-owner.entrypoints=websecure"
+      - "traefik.http.routers.petcare-frontend-owner.tls.certresolver=letsencrypt"
 
   # Frontend del Personal Clínico
   frontend-staff:
@@ -44,8 +56,11 @@ services:
         - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
     container_name: petcare-frontend-staff
     restart: always
-    environment:
-      - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-    # Dokploy ruteará `f2.irissoftware.lat` hacia el puerto 80 de este contenedor
-    expose:
-      - "80"
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.petcare-frontend-staff.rule=Host(`f2.irissoftware.lat`)"
+      - "traefik.http.services.petcare-frontend-staff.loadbalancer.server.port=80"
+      - "traefik.http.routers.petcare-frontend-staff.entrypoints=websecure"
+      - "traefik.http.routers.petcare-frontend-staff.tls.certresolver=letsencrypt"
