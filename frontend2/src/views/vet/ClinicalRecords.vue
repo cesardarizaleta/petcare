@@ -10,9 +10,12 @@
 
   onMounted(async () => {
     try {
-      await appStore.fetchAppointmentsToday();
+      await Promise.all([
+        appStore.fetchAppointmentsToday(),
+        appStore.fetchPets(),
+      ]);
     } catch (err) {
-      console.error('Error fetching today appointments in ClinicalRecords:', err);
+      console.error('Error fetching clinical data in ClinicalRecords:', err);
     }
   });
 
@@ -51,9 +54,15 @@
     <section class="card" style="padding: 1.5rem;">
       <div class="input-grid" style="align-items: flex-end;">
         <label class="field">
-          <span>ID del Paciente (mascota)</span>
-          <input v-model="petIdInput" class="input" type="number" placeholder="Ej: 1" />
+          <span>Seleccionar Paciente (mascota) *</span>
+          <select v-model="petIdInput" class="select" required>
+            <option value="" disabled>Seleccione un paciente...</option>
+            <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
+              {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }})
+            </option>
+          </select>
         </label>
+
         <button class="btn btn--primary" type="button" :disabled="loading" @click="loadPatientRecord">
           {{ loading ? 'Cargando...' : 'Buscar ficha' }}
         </button>
@@ -129,7 +138,8 @@
     </div>
 
     <p v-if="!medicalRecord && !loading" class="muted" style="text-align: center; padding: 2rem;">
-      Ingresá un ID de paciente para cargar su ficha clínica.
+      Seleccione una mascota para cargar su ficha clínica.
     </p>
+
   </div>
 </template>

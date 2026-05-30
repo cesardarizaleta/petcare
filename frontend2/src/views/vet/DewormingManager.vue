@@ -85,9 +85,14 @@
       <section class="card">
         <div class="input-row">
           <label class="field">
-            <span>ID del Paciente (mascota)</span>
+            <span>Seleccionar Paciente (mascota) *</span>
             <div class="input-grid">
-              <input v-model="form.petId" class="input" type="number" placeholder="Ej: 1" />
+              <select v-model="form.petId" class="select" @change="loadHistory">
+                <option value="" disabled>Seleccione un paciente...</option>
+                <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
+                  {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }})
+                </option>
+              </select>
               <button class="btn btn--soft" type="button" @click="loadHistory">
                 Cargar historial
               </button>
