@@ -29,7 +29,11 @@ def seed_data():
     owner_group, _ = Group.objects.get_or_create(name='owner')
     receptionist_group, _ = Group.objects.get_or_create(name='receptionist')
     veterinarian_group, _ = Group.objects.get_or_create(name='veterinarian')
+    manager_group, _ = Group.objects.get_or_create(name='manager')
+    tech_group, _ = Group.objects.get_or_create(name='technician')
+    vet_tech_group, _ = Group.objects.get_or_create(name='veterinary_technician')
     print("Grupos de seguridad creados/verificados con éxito.")
+
 
     # 2. Crear usuario Propietario (Owner)
     owner_email = 'propietario@petcare.com'
@@ -124,6 +128,41 @@ def seed_data():
         clinical_staff=clinical_staff,
         defaults={'specialty': 'Cirugía General'}
     )
+
+    # 4.1. Crear usuario Gerente
+    manager_email = 'admin@petcare.com'
+    manager_user, created = User.objects.get_or_create(
+        email=manager_email,
+        defaults={
+            'username': 'admin_gerente',
+            'first_name': 'Admin',
+            'last_name': 'Gerente',
+            'is_active': True,
+            'is_staff': True,
+            'is_superuser': True
+        }
+    )
+    if created:
+        manager_user.set_password('petcare123')
+        manager_user.save()
+    manager_user.groups.add(manager_group)
+
+    # 4.2. Crear usuario Técnico de Inventario
+    tech_email = 'tecnico@petcare.com'
+    tech_user, created = User.objects.get_or_create(
+        email=tech_email,
+        defaults={
+            'username': 'tecnico_inventario',
+            'first_name': 'Técnico',
+            'last_name': 'Inventario',
+            'is_active': True
+        }
+    )
+    if created:
+        tech_user.set_password('petcare123')
+        tech_user.save()
+    tech_user.groups.add(tech_group, vet_tech_group)
+
 
     # 5. Crear datos de Stock (Insumos y Proveedor)
     supplier, _ = Supplier.objects.get_or_create(

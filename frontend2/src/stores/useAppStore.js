@@ -81,7 +81,7 @@ export const useAppStore = defineStore('app', {
       const groups = user.groups || [];
       if (groups.includes('manager')) {
         role = 'manager';
-      } else if (groups.includes('technician')) {
+      } else if (groups.includes('technician') || groups.includes('veterinary_technician')) {
         role = 'technician';
       } else if (groups.includes('receptionist')) {
         role = 'receptionist';
