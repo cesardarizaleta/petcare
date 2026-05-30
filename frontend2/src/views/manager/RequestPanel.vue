@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import { useToastStore } from '@/stores/useToastStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
@@ -8,6 +8,7 @@ import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
 const toastStore = useToastStore();
+const processingId = ref('');
 
 onMounted(async () => {
   try {
@@ -40,6 +41,7 @@ const obtenerNombreInsumo = (insumoId) => {
 
 // 2. Funcionalidad: Modificar estado en Pinia via API
 const procesarSolicitud = async (id, nuevoEstado) => {
+  processingId.value = id;
   try {
     if (nuevoEstado === 'Aprobada') {
       await appStore.approveRequisition(id);
@@ -61,8 +63,11 @@ const procesarSolicitud = async (id, nuevoEstado) => {
       description: detail,
       type: 'error',
     });
+  } finally {
+    processingId.value = '';
   }
 };
+
 </script>
 
 <template>
@@ -108,18 +113,21 @@ const procesarSolicitud = async (id, nuevoEstado) => {
               <button 
                 type="button" 
                 class="btn btn--danger-action" 
+                :disabled="processingId !== ''"
                 @click="procesarSolicitud(solicitud.id, 'Rechazada')"
               >
-                Rechazar
+                {{ processingId === solicitud.id ? 'Rechazando...' : 'Rechazar' }}
               </button>
               <button 
                 type="button" 
                 class="btn btn--success-action" 
+                :disabled="processingId !== ''"
                 @click="procesarSolicitud(solicitud.id, 'Aprobada')"
               >
-                Aprobar Solicitud
+                {{ processingId === solicitud.id ? 'Aprobando...' : 'Aprobar Solicitud' }}
               </button>
             </div>
+
           </footer>
         </article>
 

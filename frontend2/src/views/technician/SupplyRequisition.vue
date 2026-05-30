@@ -8,6 +8,7 @@ import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
 const toastStore = useToastStore();
+const loading = ref(false);
 
 onMounted(async () => {
   try {
@@ -89,6 +90,7 @@ const enviarAlGerente = async () => {
     items: [...itemsSolicitados.value],
   };
 
+  loading.value = true;
   try {
     await appStore.addRequisition(nuevaSolicitud);
 
@@ -107,8 +109,11 @@ const enviarAlGerente = async () => {
       description: detail,
       type: 'error',
     });
+  } finally {
+    loading.value = false;
   }
 };
+
 </script>
 
 <template>
@@ -199,9 +204,10 @@ const enviarAlGerente = async () => {
           <span class="request-total__value">{{ formatUnitCost(gastoTotalPrevisto) }}</span>
         </div>
 
-        <button class="btn btn--primary request-submit" type="button" @click="enviarAlGerente">
-          Enviar al gerente
+        <button class="btn btn--primary request-submit" type="button" :disabled="loading" @click="enviarAlGerente">
+          {{ loading ? 'Enviando solicitud...' : 'Enviar al gerente' }}
         </button>
+
       </div>
     </DashboardCard>
   </div>

@@ -50,31 +50,42 @@
     step.value = Math.max(step.value - 1, 1);
   }
 
-  function scheduleAppointment() {
+  const loading = ref(false);
+
+  async function scheduleAppointment() {
     if (!form.petId || !form.reason) {
       toastStore.push({ title: 'Completa la información requerida', type: 'error' });
       return;
     }
 
-    appStore.addAppointment({
-      id: `a${Date.now()}`,
-      petId: form.petId,
-      ownerId: appStore.currentUserId,
-      vetId: 'v1',
-      date: form.date,
-      time: form.time,
-      reason: form.reason,
-      status: 'scheduled',
-      notes: form.notes,
-    });
+    loading.value = true;
+    try {
+      await appStore.addAppointment({
+        id: `a${Date.now()}`,
+        petId: form.petId,
+        ownerId: appStore.currentUserId,
+        vetId: 'v1',
+        date: form.date,
+        time: form.time,
+        reason: form.reason,
+        status: 'scheduled',
+        notes: form.notes,
+      });
 
-    toastStore.push({
-      title: 'Cita agendada',
-      description: 'La solicitud quedó registrada en el sistema.',
-      type: 'success',
-    });
-    router.push('/portal/appointments');
+      toastStore.push({
+        title: 'Cita agendada',
+        description: 'La solicitud quedó registrada en el sistema.',
+        type: 'success',
+      });
+      router.push('/portal/appointments');
+    } catch (err) {
+      console.error(err);
+      toastStore.push({ title: 'Error', description: 'No se pudo registrar la cita.', type: 'error' });
+    } finally {
+      loading.value = false;
+    }
   }
+
 </script>
 
 <template>
@@ -143,9 +154,10 @@
           <button v-if="step < 3" class="btn btn--primary" type="button" @click="nextStep">
             Continuar
           </button>
-          <button v-else class="btn btn--primary" type="button" @click="scheduleAppointment">
-            Confirmar cita
+          <button v-else class="btn btn--primary" type="button" :disabled="loading" @click="scheduleAppointment">
+            {{ loading ? 'Agendando...' : 'Confirmar cita' }}
           </button>
+
         </div>
       </div>
     </section>

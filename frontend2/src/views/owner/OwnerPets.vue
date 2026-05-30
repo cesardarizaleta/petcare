@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, reactive, onMounted } from 'vue';
+  import { computed, reactive, ref, onMounted } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import PetAvatar from '@/components/shared/PetAvatar.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
@@ -15,6 +15,7 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const loading = ref(false);
 
   onMounted(async () => {
     try {
@@ -38,37 +39,46 @@
     notes: '',
   });
 
-  function addPet() {
+  async function addPet() {
     if (!form.name || !form.breed || !form.birthDate) {
       toastStore.push({ title: 'Completa los campos requeridos', type: 'error' });
       return;
     }
 
-    appStore.addPet({
-      id: `p${Date.now()}`,
-      ownerId: appStore.currentUserId,
-      name: form.name,
-      species: form.species,
-      breed: form.breed,
-      birthDate: form.birthDate,
-      weight: Number(form.weight) || 0,
-      color: form.color,
-      notes: form.notes,
-    });
+    loading.value = true;
+    try {
+      await appStore.addPet({
+        id: `p${Date.now()}`,
+        ownerId: appStore.currentUserId,
+        name: form.name,
+        species: form.species,
+        breed: form.breed,
+        birthDate: form.birthDate,
+        weight: Number(form.weight) || 0,
+        color: form.color,
+        notes: form.notes,
+      });
 
-    toastStore.push({
-      title: 'Mascota agregada',
-      description: `${form.name} se sumó al perfil.`,
-      type: 'success',
-    });
-    form.name = '';
-    form.breed = '';
-    form.birthDate = '';
-    form.weight = '';
-    form.color = '';
-    form.notes = '';
+      toastStore.push({
+        title: 'Mascota agregada',
+        description: `${form.name} se sumó al perfil.`,
+        type: 'success',
+      });
+      form.name = '';
+      form.breed = '';
+      form.birthDate = '';
+      form.weight = '';
+      form.color = '';
+      form.notes = '';
+    } catch (err) {
+      console.error(err);
+      toastStore.push({ title: 'Error', description: 'No se pudo registrar la mascota.', type: 'error' });
+    } finally {
+      loading.value = false;
+    }
   }
 </script>
+
 
 <template>
   <div class="stack">
@@ -142,7 +152,9 @@
           <label class="field"
             ><span>Notas</span><textarea v-model="form.notes" class="textarea" rows="4" />
           </label>
-          <button class="btn btn--primary" type="button" @click="addPet">Guardar mascota</button>
+          <button class="btn btn--primary" type="button" :disabled="loading" @click="addPet">
+            {{ loading ? 'Guardando mascota...' : 'Guardar mascota' }}
+          </button>
         </div>
       </section>
     </section>

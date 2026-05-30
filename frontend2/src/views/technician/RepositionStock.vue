@@ -15,6 +15,7 @@ const EMPTY_FORM = {
 
 const appStore = useAppStore();
 const toastStore = useToastStore();
+const loading = ref(false);
 
 onMounted(async () => {
   try {
@@ -66,6 +67,7 @@ const guardarEntrada = async () => {
     return;
   }
 
+  loading.value = true;
   try {
     await appStore.addBatch(form.value.insumoId, {
       batch: form.value.batch,
@@ -92,8 +94,11 @@ const guardarEntrada = async () => {
       description: detail,
       type: 'error',
     });
+  } finally {
+    loading.value = false;
   }
 };
+
 </script>
 
 <template>
@@ -162,7 +167,9 @@ const guardarEntrada = async () => {
           />
         </div>
 
-        <button class="btn btn--primary" type="submit">Registrar entrada</button>
+        <button class="btn btn--primary" type="submit" :disabled="loading">
+          {{ loading ? 'Registrando entrada...' : 'Registrar entrada' }}
+        </button>
       </form>
     </DashboardCard>
   </div>

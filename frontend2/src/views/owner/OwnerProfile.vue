@@ -1,11 +1,12 @@
 <script setup>
-  import { reactive, watch, onMounted } from 'vue';
+  import { reactive, watch, onMounted, ref } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const loading = ref(false);
 
   const form = reactive({
     name: '',
@@ -35,6 +36,7 @@
   );
 
   async function saveProfile() {
+    loading.value = true;
     try {
       await appStore.updateProfile({
         name: form.name,
@@ -54,6 +56,8 @@
         description: 'No se pudieron actualizar los datos en el servidor.',
         type: 'error',
       });
+    } finally {
+      loading.value = false;
     }
   }
 </script>
@@ -83,8 +87,11 @@
             ><span>Dirección</span><input v-model="form.address" class="input" type="text"
           /></label>
         </div>
-        <button class="btn btn--primary" type="button" @click="saveProfile">Guardar cambios</button>
+        <button class="btn btn--primary" type="button" :disabled="loading" @click="saveProfile">
+          {{ loading ? 'Guardando cambios...' : 'Guardar cambios' }}
+        </button>
       </div>
     </section>
   </div>
 </template>
+

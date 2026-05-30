@@ -18,30 +18,43 @@ const appStore = useAppStore();
 const toastStore = useToastStore();
 const open = ref(true);
 const form = ref({ ...EMPTY_FORM });
+const loading = ref(false);
 
 const resetForm = () => {
   Object.assign(form.value, EMPTY_FORM);
 };
 
-function handleSubmit() {
-  appStore.addSupply({
-    id: Date.now(),
-    name: form.value.nombre,
-    type: form.value.tipo,
-    quantity: Number(form.value.cantidad),
-    unitCost: Number(form.value.precio),
-    umbral: Number(form.value.umbral),
-    batches: [],
-  });
+async function handleSubmit() {
+  loading.value = true;
+  try {
+    // Simulated premium micro-delay for realistic API communication
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    
+    appStore.addSupply({
+      id: Date.now(),
+      name: form.value.nombre,
+      type: form.value.tipo,
+      quantity: Number(form.value.cantidad),
+      unitCost: Number(form.value.precio),
+      umbral: Number(form.value.umbral),
+      batches: [],
+    });
 
-  toastStore.push({
-    title: 'Insumo registrado',
-    description: `${form.value.nombre} fue agregado al catálogo maestro.`,
-    type: 'success',
-  });
+    toastStore.push({
+      title: 'Insumo registrado',
+      description: `${form.value.nombre} fue agregado al catálogo maestro.`,
+      type: 'success',
+    });
 
-  resetForm();
+    resetForm();
+  } catch (err) {
+    console.error(err);
+    toastStore.push({ title: 'Error al registrar', type: 'error' });
+  } finally {
+    loading.value = false;
+  }
 }
+
 </script>
 
 <template>
@@ -116,7 +129,9 @@ function handleSubmit() {
             placeholder="Notas internas del catálogo"
           />
         </div>
-        <button class="btn btn--primary" type="submit">Registrar</button>
+        <button class="btn btn--primary" type="submit" :disabled="loading">
+          {{ loading ? 'Registrando...' : 'Registrar' }}
+        </button>
       </form>
     </DashboardCard>
   </div>
