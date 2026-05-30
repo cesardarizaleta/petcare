@@ -29,39 +29,40 @@ services:
       - "traefik.http.routers.petcare-backend.entrypoints=websecure"
       - "traefik.http.routers.petcare-backend.tls.certresolver=letsencrypt"
 
-  # Frontend antiguo (Comentado/Unificado con el principal en frontend2)
-  # frontend-owner:
-  #   build:
-  #     context: ./frontend1
-  #     dockerfile: Dockerfile
-  #     args:
-  #       - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-  #   container_name: petcare-frontend-owner
-  #   restart: always
-  #   networks:
-  #     - dokploy-network
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.petcare-frontend-owner.rule=Host(`f1.irissoftware.lat`)"
-  #     - "traefik.http.services.petcare-frontend-owner.loadbalancer.server.port=80"
-  #     - "traefik.http.routers.petcare-frontend-owner.entrypoints=websecure"
-  #     - "traefik.http.routers.petcare-frontend-owner.tls.certresolver=letsencrypt"
-
-  # Frontend Unificado de PetCare (Soporta los 5 roles: Owner, Vet, Receptionist, Technician, Manager)
-  frontend-unified:
+  # Frontend de Clientes (Propietarios) -> Ahora usa el código completo de frontend2
+  frontend-owner:
     build:
       context: ./frontend2
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-    container_name: petcare-frontend-unified
+    container_name: petcare-frontend-owner
     restart: always
     networks:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.petcare-frontend-unified.rule=Host(`f1.irissoftware.lat`) || Host(`f2.irissoftware.lat`)"
-      - "traefik.http.services.petcare-frontend-unified.loadbalancer.server.port=80"
-      - "traefik.http.routers.petcare-frontend-unified.entrypoints=websecure"
-      - "traefik.http.routers.petcare-frontend-unified.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.petcare-frontend-owner.rule=Host(`f1.irissoftware.lat`)"
+      - "traefik.http.services.petcare-frontend-owner.loadbalancer.server.port=80"
+      - "traefik.http.routers.petcare-frontend-owner.entrypoints=websecure"
+      - "traefik.http.routers.petcare-frontend-owner.tls.certresolver=letsencrypt"
+
+  # Frontend del Personal Clínico -> Ahora usa el código completo de frontend2
+  frontend-staff:
+    build:
+      context: ./frontend2
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
+    container_name: petcare-frontend-staff
+    restart: always
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.petcare-frontend-staff.rule=Host(`f2.irissoftware.lat`)"
+      - "traefik.http.services.petcare-frontend-staff.loadbalancer.server.port=80"
+      - "traefik.http.routers.petcare-frontend-staff.entrypoints=websecure"
+      - "traefik.http.routers.petcare-frontend-staff.tls.certresolver=letsencrypt"
+
 
