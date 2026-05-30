@@ -52,9 +52,19 @@ CSRF_TRUSTED_ORIGINS = [
     'https://f2.irissoftware.lat',
 ]
 
-# Static Files (Nginx servirá estos archivos directamente en producción)
+# Static Files (Nginx servirá estos archivos directamente en producción, o WhiteNoise si se expone directo)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
+
+# WhiteNoise storage to compress and cache static files
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Media Files (Subidas de archivos de usuarios, fotos de mascotas, etc.)
 MEDIA_ROOT = BASE_DIR / 'media'
