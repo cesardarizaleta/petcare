@@ -3,8 +3,8 @@
     <div class="chart-header">
       <div class="title-indicator"></div>
       <div class="title-text">
-        <h3>Evolución de Ingresos</h3>
-        <p>Tendencia financiera del período seleccionado</p>
+        <h3>Evolución de Adquisiciones</h3>
+        <p>Presupuesto invertido en compras en el período seleccionado</p>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
       labels: props.data.map((item) => item.label),
       datasets: [
         {
-          label: 'Ingresos',
+          label: 'Gasto de Compras',
           data: props.data.map((item) => item.amount),
           borderColor: '#7aa250',
           backgroundColor: 'rgba(122, 162, 80, 0.15)',

@@ -479,7 +479,8 @@ export const useAppStore = defineStore('app', {
           batches: itemBatches.map(b => ({
             batch: b.batch,
             expirationDate: b.expirationDate,
-            quantity: b.quantity
+            quantity: b.quantity,
+            initialStock: b.initial_stock || b.quantity
           }))
         };
       });
