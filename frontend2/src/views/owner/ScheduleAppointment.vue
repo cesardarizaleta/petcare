@@ -11,14 +11,22 @@
   const router = useRouter();
   const step = ref(1);
 
+  const freeSlots = ref([]);
+  const loadingSlots = ref(false);
+
   onMounted(async () => {
     try {
+      loadingSlots.value = true;
+      const slotsData = await appStore.fetchVetSlots(1);
+      freeSlots.value = slotsData;
       await Promise.all([
         appStore.fetchProfile(),
         appStore.fetchPets(),
       ]);
     } catch (err) {
       console.error('Error fetching owner data in schedule appointment:', err);
+    } finally {
+      loadingSlots.value = false;
     }
   });
 
@@ -31,6 +39,24 @@
     reason: '',
     notes: '',
   });
+
+  const availableHours = computed(() => {
+    if (!form.date) return [];
+    const dateSlots = freeSlots.value.filter(s => s.date === form.date && s.status === 'FREE');
+    return dateSlots.map(s => s.start_time.slice(0, 5)).sort();
+  });
+
+  watch(
+    availableHours,
+    (hours) => {
+      if (hours.length > 0 && !hours.includes(form.time)) {
+        form.time = hours[0];
+      } else if (hours.length === 0) {
+        form.time = '';
+      }
+    },
+    { immediate: true }
+  );
 
   watch(
     pets,
@@ -124,8 +150,9 @@
         </label>
         <label class="field">
           <span>Hora</span>
-          <select v-model="form.time" class="select">
-            <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
+          <select v-model="form.time" class="select" :disabled="availableHours.length === 0">
+            <option v-if="availableHours.length === 0" value="">No hay horarios disponibles</option>
+            <option v-for="hour in availableHours" :key="hour" :value="hour">{{ hour }}</option>
           </select>
         </label>
       </div>

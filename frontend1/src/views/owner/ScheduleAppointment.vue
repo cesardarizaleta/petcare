@@ -11,11 +11,18 @@
   const router = useRouter();
   const step = ref(1);
   
+  const freeSlots = ref([]);
+  const loadingSlots = ref(false);
+
   onMounted(async () => {
     try {
+      loadingSlots.value = true;
+      freeSlots.value = await appStore.fetchVetSlots(1);
       await appStore.fetchPets();
     } catch (err) {
       console.error('Error loading schedule appointment pets:', err);
+    } finally {
+      loadingSlots.value = false;
     }
   });
 
@@ -40,9 +47,11 @@
   );
 
   const occupiedSlots = computed(() => {
-    return appStore.appointments
-      .filter((a) => a.date === form.date && ['scheduled', 'confirmed'].includes(a.status))
-      .map((a) => a.time);
+    const freeHours = freeSlots.value
+      .filter(s => s.date === form.date && s.status === 'FREE')
+      .map(s => s.start_time.slice(0, 5));
+    
+    return timeSlots.filter(t => !freeHours.includes(t));
   });
 
   function nextStep() {
@@ -53,36 +62,41 @@
     step.value = Math.max(step.value - 1, 1);
   }
 
-  function scheduleAppointment() {
+  async function scheduleAppointment() {
     if (!form.petId || !form.reason) {
       toastStore.push({ title: 'Completa la información requerida', type: 'error' });
       return;
     }
 
-    appStore.addAppointment({
-      id: `a${Date.now()}`,
-      petId: form.petId,
-      ownerId: appStore.currentUserId,
-      vetId: 'v1',
-      date: form.date,
-      time: form.time,
-      reason: form.reason,
-      status: 'scheduled',
-      notes: form.notes,
-    });
+    try {
+      await appStore.addAppointment({
+        id: `a${Date.now()}`,
+        petId: form.petId,
+        ownerId: appStore.currentUserId,
+        vetId: 'v1',
+        date: form.date,
+        time: form.time,
+        reason: form.reason,
+        status: 'scheduled',
+        notes: form.notes,
+      });
 
-    toastStore.push({
-      title: 'Cita agendada',
-      description: 'La solicitud quedó registrada en el sistema.',
-      type: 'success',
-    });
-    appStore.addNotification({
-      title: 'Cita agendada',
-      message: `Cita programada para el ${formatDate(form.date)} a las ${form.time}.`,
-      type: 'success',
-      date: new Date().toISOString()
-    });
-    router.push('/portal/appointments');
+      toastStore.push({
+        title: 'Cita agendada',
+        description: 'La solicitud quedó registrada en el sistema.',
+        type: 'success',
+      });
+      appStore.addNotification({
+        title: 'Cita agendada',
+        message: `Cita programada para el ${formatDate(form.date)} a las ${form.time}.`,
+        type: 'success',
+        date: new Date().toISOString()
+      });
+      router.push('/portal/appointments');
+    } catch (err) {
+      console.error(err);
+      toastStore.push({ title: 'Error', description: err.message || 'No se pudo registrar la cita.', type: 'error' });
+    }
   }
 </script>
 

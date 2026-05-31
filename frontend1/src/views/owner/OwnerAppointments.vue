@@ -11,12 +11,19 @@
   const toastStore = useToastStore();
   const activeFilter = ref('all');
 
+  const freeSlots = ref([]);
+  const loadingSlots = ref(false);
+
   onMounted(async () => {
     try {
+      loadingSlots.value = true;
+      freeSlots.value = await appStore.fetchVetSlots(1);
       await appStore.fetchPets();
       await appStore.fetchAppointments();
     } catch (err) {
       console.error('Error fetching appointments:', err);
+    } finally {
+      loadingSlots.value = false;
     }
   });
   
@@ -31,6 +38,24 @@
     reason: '',
   });
 
+  const availableHours = computed(() => {
+    if (!form.date) return [];
+    const dateSlots = freeSlots.value.filter(s => s.date === form.date && s.status === 'FREE');
+    return dateSlots.map(s => s.start_time.slice(0, 5)).sort();
+  });
+
+  watch(
+    availableHours,
+    (hours) => {
+      if (hours.length > 0 && !hours.includes(form.time)) {
+        form.time = hours[0];
+      } else if (hours.length === 0) {
+        form.time = '';
+      }
+    },
+    { immediate: true }
+  );
+
   watch(
     pets,
     (newPets) => {
@@ -41,30 +66,37 @@
     { immediate: true }
   );
 
-  function scheduleAppointment() {
+  async function scheduleAppointment() {
     if (!form.petId || !form.reason || !form.date) {
       toastStore.push({ title: 'Completa la información requerida', type: 'error' });
       return;
     }
-    appStore.addAppointment({
-      id: `a${Date.now()}`,
-      petId: form.petId,
-      ownerId: appStore.currentUserId,
-      vetId: 'v1',
-      date: form.date,
-      time: form.time,
-      reason: form.reason,
-      status: 'scheduled',
-      notes: '',
-    });
-    toastStore.push({
-      title: 'Cita agendada',
-      description: 'La solicitud quedó registrada en el sistema.',
-      type: 'success',
-    });
-    showNewAppointmentModal.value = false;
-    form.reason = '';
-    form.date = getTodayShortDate();
+    try {
+      await appStore.addAppointment({
+        id: `a${Date.now()}`,
+        petId: form.petId,
+        ownerId: appStore.currentUserId,
+        vetId: 'v1',
+        date: form.date,
+        time: form.time,
+        reason: form.reason,
+        status: 'scheduled',
+        notes: '',
+      });
+      toastStore.push({
+        title: 'Cita agendada',
+        description: 'La solicitud quedó registrada en el sistema.',
+        type: 'success',
+      });
+      showNewAppointmentModal.value = false;
+      form.reason = '';
+      form.date = getTodayShortDate();
+      // Reload slots
+      freeSlots.value = await appStore.fetchVetSlots(1);
+    } catch (err) {
+      console.error(err);
+      toastStore.push({ title: 'Error', description: err.message || 'No se pudo registrar la cita.', type: 'error' });
+    }
   }
 
   // Cancel Modal
@@ -209,8 +241,9 @@
             </label>
             <label class="field">
               <span>Hora</span>
-              <select v-model="form.time" class="select">
-                <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
+              <select v-model="form.time" class="select" :disabled="availableHours.length === 0">
+                <option v-if="availableHours.length === 0" value="">No hay horarios disponibles</option>
+                <option v-for="hour in availableHours" :key="hour" :value="hour">{{ hour }}</option>
               </select>
             </label>
           </div>

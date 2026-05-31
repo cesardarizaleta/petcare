@@ -362,6 +362,10 @@ export const useAppStore = defineStore('app', {
       }));
       return this.appointments;
     },
+    async fetchVetSlots(vetId) {
+      const res = await http.get(`/api/v1/vets/${vetId}/slots/`);
+      return res.data;
+    },
     async addAppointment(appointmentData) {
       const vetId = 1; // Unico veterinario registrado en la DB de producción
       
@@ -373,13 +377,7 @@ export const useAppStore = defineStore('app', {
       let slot = slots.find(s => s.date === appointmentData.date && s.start_time === matchTime && s.status === 'FREE');
       
       if (!slot) {
-        slot = slots.find(s => s.date === appointmentData.date && s.status === 'FREE');
-      }
-      if (!slot) {
-        slot = slots.find(s => s.status === 'FREE');
-      }
-      if (!slot) {
-        throw new Error('No hay turnos disponibles para este veterinario.');
+        throw new Error('El horario seleccionado ya no está disponible para esta fecha.');
       }
       
       const payload = {

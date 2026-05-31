@@ -548,8 +548,30 @@ export const useAppStore = defineStore('app', {
     updatePet(pet) {
       this.pets = this.pets.map((item) => (item.id === pet.id ? pet : item));
     },
-    addAppointment(appointment) {
-      this.appointments.push(appointment);
+    async addAppointment(appointmentData) {
+      const vetId = 1; // Unico veterinario registrado en la DB de producción
+      
+      // Buscar slots disponibles del veterinario
+      const slotsRes = await http.get(`/api/v1/vets/${vetId}/slots/`);
+      const slots = slotsRes.data;
+      
+      const matchTime = appointmentData.time.length === 5 ? `${appointmentData.time}:00` : appointmentData.time;
+      let slot = slots.find(s => s.date === appointmentData.date && s.start_time === matchTime && s.status === 'FREE');
+      
+      if (!slot) {
+        throw new Error('El horario seleccionado ya no está disponible para esta fecha.');
+      }
+      
+      const payload = {
+        slot_id: slot.id,
+        patient_id: appointmentData.petId,
+        reason: appointmentData.reason || appointmentData.notes || 'Consulta general',
+      };
+      
+      const res = await http.post('/api/v1/appointments/', payload);
+      const appt = this._mapAppointment(res.data);
+      this.appointments.push(appt);
+      return appt;
     },
     updateAppointment(appointment) {
       this.appointments = this.appointments.map((item) =>
