@@ -44,6 +44,14 @@
       return;
     }
 
+    if (form.dose) {
+      const cleanDose = form.dose.trim();
+      if (/-\d/.test(cleanDose) || cleanDose.startsWith('-')) {
+        toastStore.push({ title: 'Error de validación', description: 'La dosis no puede ser negativa.', type: 'error' });
+        return;
+      }
+    }
+
     loading.value = true;
     try {
       await appStore.registerVaccinationEvent(form.petId, {

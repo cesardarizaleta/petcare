@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, watch, onMounted } from 'vue';
+  import { ref, watch, onMounted, computed } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import DashboardCard from '@/components/shared/DashboardCard.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
@@ -23,6 +23,39 @@
   const medicalRecord = ref(null);
   const vaccineHistory = ref([]);
   const loading = ref(false);
+
+  const formattedMedicalAlerts = computed(() => {
+    if (!medicalRecord.value || !medicalRecord.value.medical_alerts) {
+      return 'Sin alertas';
+    }
+    const rawAlerts = medicalRecord.value.medical_alerts;
+    if (typeof rawAlerts === 'string' && (rawAlerts.trim().startsWith('[') || rawAlerts.trim().startsWith('{'))) {
+      try {
+        const parsed = JSON.parse(rawAlerts);
+        if (Array.isArray(parsed)) {
+          // Si es la lista JSON de consultas, no mostramos el texto plano de todo el JSON.
+          // Filtramos diagnósticos o notas críticas si existen, si no, mostramos un mensaje limpio.
+          const criticalTerms = ['alergia', 'crítico', 'critico', 'grave', 'urgencia', 'gravedad', 'intoxicación', 'intoxicacion'];
+          const criticalAlerts = [];
+          parsed.forEach(c => {
+            const diagnosis = (c.diagnosis || '').toLowerCase();
+            const notes = (c.notes || '').toLowerCase();
+            if (criticalTerms.some(term => diagnosis.includes(term) || notes.includes(term))) {
+              criticalAlerts.push(`${c.date}: ${c.diagnosis}`);
+            }
+          });
+          
+          if (criticalAlerts.length > 0) {
+            return criticalAlerts.join(' | ');
+          }
+          return 'Sin alertas registradas';
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return rawAlerts;
+  });
 
   async function loadPatientRecord() {
     if (!petIdInput.value) return;
@@ -90,7 +123,7 @@
             </div>
             <div>
               <p class="eyebrow">Alertas médicas</p>
-              <p>{{ medicalRecord.medical_alerts || 'Sin alertas' }}</p>
+              <p>{{ formattedMedicalAlerts }}</p>
             </div>
             <div v-if="medicalRecord.owner_name">
               <p class="eyebrow">Propietario</p>

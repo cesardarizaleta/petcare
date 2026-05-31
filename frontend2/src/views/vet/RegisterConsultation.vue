@@ -48,6 +48,15 @@
       return;
     }
 
+    if (form.weight !== '' && form.weight !== null && Number(form.weight) < 0) {
+      toastStore.push({ title: 'Error de validación', description: 'El peso no puede ser negativo.', type: 'error' });
+      return;
+    }
+    if (form.temperature !== '' && form.temperature !== null && Number(form.temperature) < 0) {
+      toastStore.push({ title: 'Error de validación', description: 'La temperatura no puede ser negativa.', type: 'error' });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.saveConsultation(form.appointmentId, {

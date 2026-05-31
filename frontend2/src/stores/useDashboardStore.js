@@ -14,6 +14,15 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const fetchDashboardData = async (periodo = 'este_mes') => {
     isLoading.value = true;
 
+    try {
+      await Promise.all([
+        appStore.fetchAppointments(),
+        appStore.fetchInventory()
+      ]);
+    } catch (e) {
+      console.error('Error fetching general dashboard dependencies:', e);
+    }
+
     //Simular el tiempo de respuesta del servidor (1 segundo)
     setTimeout(() => {
       // 1. Obtener las fechas de control del sistema (Respetando zona horaria local)

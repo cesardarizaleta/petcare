@@ -92,7 +92,7 @@
             </article>
             <article class="card">
               <p class="eyebrow">En espera</p>
-              <strong>{{ appStore.waitingList.length }}</strong>
+              <strong>{{ appStore.waitingList.filter(e => e.status === 'WAITING').length }}</strong>
             </article>
             <article class="card">
               <p class="eyebrow">Consultorios</p>

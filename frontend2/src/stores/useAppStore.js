@@ -319,12 +319,34 @@ export const useAppStore = defineStore('app', {
     },
 
     async createAppointment(payload) {
-      // payload: { slot_id, patient_id, reason }
-      const res = await http.post('/api/v1/appointments/', payload);
+      // payload can be: { slot_id, patient_id, reason } OR { patient_id, reason, date, time }
+      if (!payload.slot_id && payload.date && payload.time) {
+        const vetId = 1; // Unico veterinario registrado en la DB de producción
+        const slotsRes = await http.get(`/api/v1/vets/${vetId}/slots/`);
+        const slots = slotsRes.data;
+        
+        const matchTime = payload.time.length === 5 ? `${payload.time}:00` : payload.time;
+        let slot = slots.find(s => s.date === payload.date && s.start_time === matchTime && s.status === 'FREE');
+        
+        if (!slot) {
+          throw new Error('El horario seleccionado ya no está disponible para esta fecha.');
+        }
+        
+        payload.slot_id = slot.id;
+      }
+
+      const backendPayload = {
+        slot_id: payload.slot_id,
+        patient_id: payload.patient_id,
+        reason: payload.reason || 'Consulta general',
+      };
+
+      const res = await http.post('/api/v1/appointments/', backendPayload);
       const appt = this._mapAppointment(res.data);
       this.appointments.push(appt);
       return appt;
     },
+
 
     async confirmAppointment(id) {
       await http.post(`/api/v1/appointments/${id}/confirm/`);
@@ -445,10 +467,14 @@ export const useAppStore = defineStore('app', {
       const batches = res.data;
       
       this.inventory = this.inventory.map(item => {
+        const savedUmbral = localStorage.getItem(`inventory_umbral_${item.id}`);
+        const currentUmbral = savedUmbral !== null ? parseInt(savedUmbral, 10) : item.umbral;
+        
         const itemBatches = batches.filter(b => b.supply === item.id);
         const totalQty = itemBatches.reduce((sum, b) => sum + b.quantity, 0);
         return {
           ...item,
+          umbral: currentUmbral,
           quantity: totalQty,
           batches: itemBatches.map(b => ({
             batch: b.batch,
@@ -461,6 +487,14 @@ export const useAppStore = defineStore('app', {
     },
 
     normalizeInventory() {
+      // Sincronizar umbrales desde localStorage al normalizar
+      this.inventory = this.inventory.map(item => {
+        const savedUmbral = localStorage.getItem(`inventory_umbral_${item.id}`);
+        if (savedUmbral !== null) {
+          item.umbral = parseInt(savedUmbral, 10);
+        }
+        return item;
+      });
       normalizeInventory(this.inventory);
     },
 
@@ -469,6 +503,7 @@ export const useAppStore = defineStore('app', {
         ...supply,
         batches: supply.batches ?? [],
       });
+      localStorage.setItem(`inventory_umbral_${item.id}`, item.umbral);
       this.inventory.push(item);
       return item;
     },
@@ -510,6 +545,7 @@ export const useAppStore = defineStore('app', {
         const supply = this.inventory.find(i => i.id === item.insumoId);
         return {
           insumoId: item.insumoId,
+          nombre: supply?.name || 'Insumo Nuevo',
           cantidad: Number(item.quantity),
           costoUnitario: String(supply?.unitCost || 10.00)
         };

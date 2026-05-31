@@ -31,10 +31,7 @@ class PurchaseOrderItemCreateSerializer(serializers.Serializer):
     )
 
     def validate_insumoId(self, value):
-        if not Supply.objects.filter(pk=value).exists():
-            raise serializers.ValidationError(
-                f"El insumo con ID '{value}' no existe."
-            )
+        # Permitir que pase cualquier UUID válido. Se creará al vuelo si no existe.
         return value
 
 
@@ -73,9 +70,22 @@ class PurchaseOrderCreateSerializer(serializers.Serializer):
         )
 
         for item_data in items_data:
+            insumo_id = item_data['insumoId']
+            nombre = item_data.get('nombre') or 'Insumo Nuevo'
+            
+            supply, created = Supply.objects.get_or_create(
+                pk=insumo_id,
+                defaults={
+                    'sku': f"SKU-{str(insumo_id)[:8].upper()}",
+                    'name': nombre,
+                    'category': 'CONSUMABLE',
+                    'min_stock': 10
+                }
+            )
+
             PurchaseOrderItem.objects.create(
                 order=order,
-                supply_id=item_data['insumoId'],
+                supply=supply,
                 quantity_requested=item_data['cantidad'],
                 unit_cost=item_data['costoUnitario'],
             )

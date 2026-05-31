@@ -3,10 +3,12 @@ import { computed, onMounted } from 'vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { useAppStore } from '@/stores/useAppStore';
+import { useToastStore } from '@/stores/useToastStore';
 import { formatMoney } from '@/lib/petcare';
 import { evaluateProductAlertState } from '@/lib/inventory';
 
 const appStore = useAppStore();
+const toastStore = useToastStore();
 
 onMounted(async () => {
   try {
@@ -28,6 +30,25 @@ const alertByItemId = computed(() => {
   });
   return map;
 });
+
+function handleUmbralChange(item) {
+  if (item.umbral === undefined || item.umbral === null || item.umbral === '' || Number(item.umbral) < 1) {
+    toastStore.push({
+      title: 'Stock mínimo inválido',
+      description: 'El stock mínimo no puede ser negativo o menor a 1. Se ha restablecido a 1.',
+      type: 'error'
+    });
+    item.umbral = 1;
+  } else {
+    toastStore.push({
+      title: 'Stock mínimo actualizado',
+      description: `El stock mínimo para ${item.name} se actualizó a ${item.umbral} unidades.`,
+      type: 'success'
+    });
+  }
+  localStorage.setItem(`inventory_umbral_${item.id}`, item.umbral);
+  appStore.normalizeInventory();
+}
 </script>
 
 <template>
@@ -79,6 +100,7 @@ const alertByItemId = computed(() => {
                   min="1"
                   class="input inventory-umbral-input"
                   title="Nivel mínimo de existencias"
+                  @change="handleUmbralChange(item)"
                 />
               </td>
               <td>{{ formatUnitCost(item.unitCost) }}</td>

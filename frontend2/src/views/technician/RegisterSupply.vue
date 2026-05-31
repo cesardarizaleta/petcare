@@ -24,14 +24,49 @@ const resetForm = () => {
   Object.assign(form.value, EMPTY_FORM);
 };
 
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 async function handleSubmit() {
+  if (form.value.cantidad !== '' && Number(form.value.cantidad) < 0) {
+    toastStore.push({
+      title: 'Error de validación',
+      description: 'La cantidad disponible no puede ser negativa.',
+      type: 'error'
+    });
+    return;
+  }
+
+  if (form.value.precio !== '' && Number(form.value.precio) < 0) {
+    toastStore.push({
+      title: 'Error de validación',
+      description: 'El costo unitario no puede ser negativo.',
+      type: 'error'
+    });
+    return;
+  }
+
+  if (form.value.umbral === '' || form.value.umbral === null || Number(form.value.umbral) < 1) {
+    toastStore.push({
+      title: 'Error de validación',
+      description: 'El nivel mínimo de existencias (stock mínimo) debe ser mayor o igual a 1.',
+      type: 'error'
+    });
+    return;
+  }
+
   loading.value = true;
   try {
     // Simulated premium micro-delay for realistic API communication
     await new Promise((resolve) => setTimeout(resolve, 600));
     
     appStore.addSupply({
-      id: Date.now(),
+      id: generateUUID(),
       name: form.value.nombre,
       type: form.value.tipo,
       quantity: Number(form.value.cantidad),

@@ -44,6 +44,11 @@
       return;
     }
 
+    if (form.weight !== '' && form.weight !== null && Number(form.weight) < 0) {
+      toastStore.push({ title: 'Error de validación', description: 'El peso no puede ser negativo.', type: 'error' });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.registerVaccinationEvent(form.petId, {
