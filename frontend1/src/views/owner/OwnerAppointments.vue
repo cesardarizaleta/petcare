@@ -31,16 +31,44 @@
   const showNewAppointmentModal = ref(false);
   const pets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
 
+  const getLocalDateStr = (d = new Date()) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const todayStr = ref(getLocalDateStr());
+  
+  const getMaxDateStr = () => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    return getLocalDateStr(d);
+  };
+  const maxDateStr = ref(getMaxDateStr());
+
   const form = reactive({
     petId: '',
-    date: getTodayShortDate(),
+    date: todayStr.value,
     time: '09:00',
     reason: '',
   });
 
   const availableHours = computed(() => {
     if (!form.date) return [];
-    const dateSlots = freeSlots.value.filter(s => s.date === form.date && s.status === 'FREE');
+    let dateSlots = freeSlots.value.filter(s => s.date === form.date && s.status === 'FREE');
+    
+    if (form.date === todayStr.value) {
+      const now = new Date();
+      const currentHour = String(now.getHours()).padStart(2, '0');
+      const currentMin = String(now.getMinutes()).padStart(2, '0');
+      const currentHourStr = `${currentHour}:${currentMin}`;
+      dateSlots = dateSlots.filter(s => {
+        const slotTime = s.start_time.slice(0, 5); // "HH:MM"
+        return slotTime > currentHourStr;
+      });
+    }
+    
     return dateSlots.map(s => s.start_time.slice(0, 5)).sort();
   });
 
@@ -90,7 +118,7 @@
       });
       showNewAppointmentModal.value = false;
       form.reason = '';
-      form.date = getTodayShortDate();
+      form.date = todayStr.value;
       // Reload slots
       freeSlots.value = await appStore.fetchVetSlots(1);
     } catch (err) {
@@ -128,16 +156,35 @@
     cancelReasonInput.value = '';
   }
 
-  function confirmCancellation() {
+  function canCancel(appointment) {
+    if (['completed', 'cancelled', 'checked_in'].includes(appointment.status.toLowerCase())) {
+      return false;
+    }
+    const apptDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    const now = new Date();
+    return apptDateTime > now;
+  }
+
+  async function confirmCancellation() {
     if (!selectedAppointment.value || !cancelReasonInput.value.trim()) return;
 
-    appStore.cancelAppointment(selectedAppointment.value.id, cancelReasonInput.value.trim());
-    toastStore.push({
-      title: 'Cita cancelada',
-      description: `${selectedAppointment.value.reason} fue cancelada.`,
-      type: 'info',
-    });
-    closeCancelModal();
+    try {
+      await appStore.cancelAppointment(selectedAppointment.value.id, cancelReasonInput.value.trim());
+      toastStore.push({
+        title: 'Cita cancelada',
+        description: `${selectedAppointment.value.reason} fue cancelada.`,
+        type: 'info',
+      });
+      closeCancelModal();
+    } catch (err) {
+      console.error(err);
+      const detail = err.response?.data?.error || 'No se pudo cancelar la cita.';
+      toastStore.push({
+        title: 'Error al cancelar',
+        description: detail,
+        type: 'error',
+      });
+    }
   }
 </script>
 
@@ -205,7 +252,7 @@
             <td><StatusBadge :status="appointment.status" /></td>
             <td>
               <button
-                v-if="appointment.status !== 'completed' && appointment.status !== 'cancelled'"
+                v-if="canCancel(appointment)"
                 class="btn btn--soft btn--sm"
                 type="button"
                 @click="openCancelModal(appointment)"
@@ -237,7 +284,7 @@
           <div class="input-grid">
             <label class="field">
               <span>Fecha</span>
-              <input v-model="form.date" class="input" type="date" />
+              <input v-model="form.date" class="input" type="date" :min="todayStr" :max="maxDateStr" />
             </label>
             <label class="field">
               <span>Hora</span>

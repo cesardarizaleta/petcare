@@ -58,10 +58,11 @@ class AppointmentsTestCase(APITestCase):
         self.vet_profile = Veterinarian.objects.create(clinical_staff=self.vet_staff, specialty='Cirugía')
 
         # 5. Crear Schedule y Slot de prueba
+        tomorrow = timezone.now().date() + timedelta(days=1)
         self.schedule = VetSchedule.objects.create(
             vet=self.vet_profile,
-            start_date=timezone.now().date(),
-            end_date=timezone.now().date()
+            start_date=tomorrow,
+            end_date=tomorrow
         )
         self.slot = TimeSlot.objects.create(
             schedule=self.schedule,

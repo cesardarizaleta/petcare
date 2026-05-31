@@ -25,6 +25,15 @@
       return;
     }
 
+    if (form.dni && !/^[0-9]{6,10}$/.test(form.dni)) {
+      toastStore.push({
+        title: 'Cédula / DNI inválido',
+        description: 'La cédula debe contener entre 6 y 10 dígitos numéricos positivos.',
+        type: 'error'
+      });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.register(form);

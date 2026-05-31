@@ -275,6 +275,7 @@ export const useAppStore = defineStore('app', {
         date_of_birth: petData.birthDate || petData.date_of_birth,
         sex: petData.sex || 'M',
         weight_kg: parseFloat(petData.weight) || 0,
+        color: petData.color || '',
       };
       
       const res = await http.post('/api/v1/owners/me/pets/', backendPayload);
@@ -288,7 +289,7 @@ export const useAppStore = defineStore('app', {
         breed: pet.breed || '',
         birthDate: pet.date_of_birth || pet.birth_date,
         weight: pet.weight_kg || 0,
-        color: petData.color || 'Dorado',
+        color: pet.color || petData.color || 'Marrón/Gris',
         microchip: pet.microchip_id || '',
       };
       

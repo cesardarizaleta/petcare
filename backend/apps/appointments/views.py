@@ -216,6 +216,23 @@ def appointment_list(request):
     if slot.status != "FREE":
         return Response({"error": "Slot is not available"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Validar fecha/hora en el pasado y límite de 6 meses
+    from datetime import datetime
+    local_now = timezone.localtime(timezone.now()).replace(tzinfo=None)
+    appt_datetime = datetime.combine(slot.schedule.start_date, slot.start_time)
+
+    if appt_datetime < local_now:
+        return Response(
+            {"error": "No se pueden agendar citas para fechas u horarios en el pasado."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if slot.schedule.start_date > local_now.date() + timedelta(days=180):
+        return Response(
+            {"error": "No se pueden agendar citas a más de 6 meses de anticipación."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     appt = Appointment.objects.create(
         slot=slot, patient=patient, reason_for_visit=reason, status="SCHEDULED"
     )
@@ -236,9 +253,29 @@ def appointment_list(request):
 def appointment_cancel(request, id):
     """POST /api/v1/appointments/{id}/cancel/"""
     try:
-        appt = Appointment.objects.select_related("slot").get(pk=id)
+        appt = Appointment.objects.select_related("slot__schedule").get(pk=id)
     except Appointment.DoesNotExist:
         return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    # 1. Validar por estado
+    if appt.status in ['CHECKED_IN', 'COMPLETED']:
+        return Response({"error": "No se puede cancelar una cita que ya está en atención o completada."}, status=status.HTTP_400_BAD_REQUEST)
+    if appt.status == 'CANCELLED':
+        return Response({"error": "La cita ya está cancelada."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 2. Validar si ya pasó o está en la hora programada
+    if appt.slot:
+        from datetime import datetime
+        appt_datetime = datetime.combine(appt.slot.schedule.start_date, appt.slot.start_time)
+        
+        current_time = timezone.now()
+        if timezone.is_aware(current_time):
+            local_now = timezone.localtime(current_time).replace(tzinfo=None)
+        else:
+            local_now = current_time
+            
+        if appt_datetime <= local_now:
+            return Response({"error": "No se puede cancelar una cita que ya ha comenzado o cuyo horario ya pasó."}, status=status.HTTP_400_BAD_REQUEST)
 
     appt.status = "CANCELLED"
     appt.save()

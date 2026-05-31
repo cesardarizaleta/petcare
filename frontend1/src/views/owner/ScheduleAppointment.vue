@@ -28,9 +28,25 @@
 
   const pets = computed(() => getOwnerPets(appStore.pets, appStore.currentUserId));
 
+  const getLocalDateStr = (d = new Date()) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const todayStr = ref(getLocalDateStr());
+  
+  const getMaxDateStr = () => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    return getLocalDateStr(d);
+  };
+  const maxDateStr = ref(getMaxDateStr());
+
   const form = reactive({
     petId: '',
-    date: getTodayShortDate(),
+    date: todayStr.value,
     time: '09:00',
     reason: '',
     notes: '',
@@ -51,7 +67,17 @@
       .filter(s => s.date === form.date && s.status === 'FREE')
       .map(s => s.start_time.slice(0, 5));
     
-    return timeSlots.filter(t => !freeHours.includes(t));
+    return timeSlots.filter(t => {
+      if (!freeHours.includes(t)) return true;
+      if (form.date === todayStr.value) {
+        const now = new Date();
+        const currentHour = String(now.getHours()).padStart(2, '0');
+        const currentMin = String(now.getMinutes()).padStart(2, '0');
+        const currentHourStr = `${currentHour}:${currentMin}`;
+        return t <= currentHourStr;
+      }
+      return false;
+    });
   });
 
   function nextStep() {
@@ -132,7 +158,7 @@
       <div v-else-if="step === 2" class="stack" style="margin-top: 18px">
         <label class="field">
           <span>Fecha</span>
-          <input v-model="form.date" class="input" type="date" />
+          <input v-model="form.date" class="input" type="date" :min="todayStr" :max="maxDateStr" />
         </label>
         <div class="field">
           <span>Hora</span>

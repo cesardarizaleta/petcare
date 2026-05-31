@@ -34,13 +34,32 @@
     return appointments.filter((item) => item.status === activeFilter.value);
   });
 
-  function cancelAppointment(appointment) {
-    appStore.cancelAppointment(appointment.id);
-    toastStore.push({
-      title: 'Cita cancelada',
-      description: `${appointment.reason} fue cancelada.`,
-      type: 'info',
-    });
+  function canCancel(appointment) {
+    if (['completed', 'cancelled', 'checked_in'].includes(appointment.status.toLowerCase())) {
+      return false;
+    }
+    const apptDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    const now = new Date();
+    return apptDateTime > now;
+  }
+
+  async function cancelAppointment(appointment) {
+    try {
+      await appStore.cancelAppointment(appointment.id);
+      toastStore.push({
+        title: 'Cita cancelada',
+        description: `${appointment.reason} fue cancelada.`,
+        type: 'info',
+      });
+    } catch (err) {
+      console.error(err);
+      const detail = err.response?.data?.error || 'No se pudo cancelar la cita.';
+      toastStore.push({
+        title: 'Error al cancelar',
+        description: detail,
+        type: 'error',
+      });
+    }
   }
 </script>
 
@@ -105,7 +124,7 @@
             <td><StatusBadge :status="appointment.status" /></td>
             <td>
               <button
-                v-if="appointment.status !== 'completed' && appointment.status !== 'cancelled'"
+                v-if="canCancel(appointment)"
                 class="btn btn--soft"
                 type="button"
                 @click="cancelAppointment(appointment)"

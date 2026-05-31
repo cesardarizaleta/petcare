@@ -35,9 +35,14 @@ def register(request):
     password = data.get('password')
     first_name = data.get('first_name', '')
     last_name = data.get('last_name', '')
-    
     if not email or not password:
         return Response({'error': 'Email y contraseña son obligatorios.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    dni = data.get('dni')
+    if dni:
+        import re
+        if not re.match(r'^\d{6,10}$', str(dni)):
+            return Response({'error': 'La cédula/DNI debe contener entre 6 y 10 dígitos positivos.'}, status=status.HTTP_400_BAD_REQUEST)
         
     if User.objects.filter(email=email).exists():
         return Response({'email': ['Este correo electrónico ya está registrado.']}, status=status.HTTP_400_BAD_REQUEST)
