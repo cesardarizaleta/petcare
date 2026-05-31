@@ -15,6 +15,7 @@
     email: '',
     phone: '',
     address: '',
+    dni: '',
     password: '',
   });
 
@@ -85,15 +86,20 @@
             <input v-model="form.phone" class="input" type="text" placeholder="555-0000" />
           </label>
           <label class="field">
-            <span>Dirección</span>
-            <input
-              v-model="form.address"
-              class="input"
-              type="text"
-              placeholder="Av. Libertad 123"
-            />
+            <span>Cédula / DNI</span>
+            <input v-model="form.dni" class="input" type="text" placeholder="12345678" />
           </label>
         </div>
+
+        <label class="field">
+          <span>Dirección</span>
+          <input
+            v-model="form.address"
+            class="input"
+            type="text"
+            placeholder="Av. Libertad 123"
+          />
+        </label>
 
         <button class="btn btn--primary" type="submit" :disabled="loading">
           {{ loading ? 'Creando cuenta...' : 'Crear cuenta' }}

@@ -15,6 +15,7 @@
     email: '',
     phone: '',
     address: '',
+    dni: '',
     password: '',
   });
 
@@ -31,6 +32,7 @@
         password: form.password,
         phone: form.phone,
         address: form.address,
+        dni: form.dni,
       });
 
       toastStore.push({
@@ -90,9 +92,14 @@
           <input v-model="form.phone" class="input input--auth" type="text" placeholder="555-0000" />
         </div>
         <div class="field">
-          <label class="field__label">Dirección</label>
-          <input v-model="form.address" class="input input--auth" type="text" placeholder="Av. Libertad 123" />
+          <label class="field__label">Cédula / DNI</label>
+          <input v-model="form.dni" class="input input--auth" type="text" placeholder="12345678" />
         </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label">Dirección</label>
+        <input v-model="form.address" class="input input--auth" type="text" placeholder="Av. Libertad 123" />
       </div>
 
       <button class="btn btn--primary btn--block" type="submit">Crear cuenta</button>

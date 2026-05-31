@@ -13,6 +13,7 @@
     email: '',
     phone: '',
     address: '',
+    dni: '',
   });
 
   onMounted(async () => {
@@ -31,6 +32,7 @@
       form.email = owner.email;
       form.phone = owner.phone;
       form.address = owner.address;
+      form.dni = owner.dni || '';
     },
     { immediate: true }
   );
@@ -43,6 +45,7 @@
         email: form.email,
         phone: form.phone,
         address: form.address,
+        dni: form.dni,
       });
       toastStore.push({
         title: 'Perfil actualizado',
@@ -84,9 +87,12 @@
             ><span>Teléfono</span><input v-model="form.phone" class="input" type="text"
           /></label>
           <label class="field"
-            ><span>Dirección</span><input v-model="form.address" class="input" type="text"
+            ><span>Cédula / DNI</span><input v-model="form.dni" class="input" type="text"
           /></label>
         </div>
+        <label class="field"
+          ><span>Dirección</span><input v-model="form.address" class="input" type="text"
+        /></label>
         <button class="btn btn--primary" type="button" :disabled="loading" @click="saveProfile">
           {{ loading ? 'Guardando cambios...' : 'Guardar cambios' }}
         </button>

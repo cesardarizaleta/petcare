@@ -127,7 +127,7 @@ export const useAppStore = defineStore('app', {
         last_name,
         phone: payload.phone || '+541155554444',
         address: payload.address || 'Av. Libertador 1420, CABA',
-        dni: String(30000000 + Math.floor(Math.random() * 9999999)),
+        dni: payload.dni || String(30000000 + Math.floor(Math.random() * 9999999)),
         location: 'Sede Palermo',
         emergency_contact: payload.phone || '+541155559999',
       };
@@ -165,6 +165,7 @@ export const useAppStore = defineStore('app', {
         email: data.user.email,
         phone: data.phone || '',
         address: data.address || '',
+        dni: data.dni || '',
         createdAt: data.created_at ? data.created_at.slice(0, 10) : '',
       };
       
@@ -190,6 +191,7 @@ export const useAppStore = defineStore('app', {
         last_name,
         phone: formData.phone,
         address: formData.address,
+        dni: formData.dni,
       };
       
       const res = await http.patch('/api/v1/owners/me/', patchPayload);
@@ -200,6 +202,7 @@ export const useAppStore = defineStore('app', {
         email: data.user.email,
         phone: data.phone || '',
         address: data.address || '',
+        dni: data.dni || '',
         createdAt: data.created_at ? data.created_at.slice(0, 10) : '',
       };
       

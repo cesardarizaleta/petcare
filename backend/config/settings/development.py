@@ -39,16 +39,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'petcare',
-        'USER': 'petcareuser',
-        'PASSWORD': '30640838Cda',
-        'HOST': '207.180.223.61',
-        'PORT': '9070',
+import sys
+
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db_test.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'petcare',
+            'USER': 'petcareuser',
+            'PASSWORD': '30640838Cda',
+            'HOST': '207.180.223.61',
+            'PORT': '9070',
+        }
+    }
 
 
 # Static files (CSS, JavaScript, Images)

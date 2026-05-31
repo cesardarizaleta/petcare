@@ -25,6 +25,7 @@
     // Load pets for the vet to see
     // Pets might be populated from today's appointments
     await appStore.fetchAppointmentsToday();
+    await appStore.fetchPets();
   });
 
   async function loadVaccineHistory() {

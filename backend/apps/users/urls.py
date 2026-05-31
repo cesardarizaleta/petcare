@@ -10,6 +10,7 @@ urlpatterns = [
     path('register/', views.register, name='auth-register'),
     path('login/', views.login, name='auth-login'),
     path('refresh/', views.refresh, name='auth-refresh'),
+    path('login-veterinarian/', views.login_veterinarian, name='auth-login-veterinarian'),
 
     # Security & Test endpoints
     path('receptionist/', views.ReceptionistTestView.as_view(), name='receptionist_test'),

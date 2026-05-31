@@ -26,10 +26,11 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField(read_only=True)
     phone = serializers.SerializerMethodField(read_only=True)
     address = serializers.SerializerMethodField(read_only=True)
+    dni = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Owner
-        fields = ('id', 'user', 'phone', 'address', 'created_at')
+        fields = ('id', 'user', 'phone', 'address', 'dni', 'created_at')
         read_only_fields = fields
 
     def get_created_at(self, obj):
@@ -45,6 +46,11 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
             return obj.natural_person.address
         return None
 
+    def get_dni(self, obj):
+        if obj.natural_person:
+            return obj.natural_person.dni
+        return None
+
 
 class OwnerUpdateSerializer(serializers.ModelSerializer):
     """
@@ -57,15 +63,17 @@ class OwnerUpdateSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name', required=False)
     phone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     address = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    dni = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = Owner
-        fields = ('first_name', 'last_name', 'phone', 'address')
+        fields = ('first_name', 'last_name', 'phone', 'address', 'dni')
 
     def update(self, instance, validated_data):
-        # Extraer datos de phone y address
+        # Extraer datos de phone, address y dni
         phone = validated_data.pop('phone', None)
         address = validated_data.pop('address', None)
+        dni = validated_data.pop('dni', None)
 
         # Extraer datos anidados del User antes de actualizar Owner
         user_data = validated_data.pop('user', {})
@@ -82,8 +90,8 @@ class OwnerUpdateSerializer(serializers.ModelSerializer):
                 setattr(user, attr, value)
             user.save()
 
-        # Actualizar o crear NaturalPerson para guardar phone y address
-        if phone is not None or address is not None:
+        # Actualizar o crear NaturalPerson para guardar phone, address y dni
+        if phone is not None or address is not None or dni is not None:
             natural_person = instance.natural_person
             if not natural_person:
                 from apps.users.models import NaturalPerson
@@ -95,6 +103,8 @@ class OwnerUpdateSerializer(serializers.ModelSerializer):
                 natural_person.phone = phone
             if address is not None:
                 natural_person.address = address
+            if dni is not None:
+                natural_person.dni = dni
             natural_person.save()
 
         return instance
