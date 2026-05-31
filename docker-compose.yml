@@ -29,40 +29,22 @@ services:
       - "traefik.http.routers.petcare-backend.entrypoints=websecure"
       - "traefik.http.routers.petcare-backend.tls.certresolver=letsencrypt"
 
-  # Frontend de Clientes (Propietarios) -> Ahora usa el código completo de frontend2
-  frontend-owner:
+  # Frontend Unificado -> Código completo de frontend2 con login único para todos los roles
+  frontend:
     build:
       context: ./frontend2
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-    container_name: petcare-frontend-owner
+    container_name: petcare-frontend
     restart: always
     networks:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.petcare-frontend-owner.rule=Host(`f1.irissoftware.lat`)"
-      - "traefik.http.services.petcare-frontend-owner.loadbalancer.server.port=80"
-      - "traefik.http.routers.petcare-frontend-owner.entrypoints=websecure"
-      - "traefik.http.routers.petcare-frontend-owner.tls.certresolver=letsencrypt"
-
-  # Frontend del Personal Clínico -> Ahora usa el código completo de frontend2
-  frontend-staff:
-    build:
-      context: ./frontend2
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_BASE_URL=https://bpetcare.irissoftware.lat
-    container_name: petcare-frontend-staff
-    restart: always
-    networks:
-      - dokploy-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.petcare-frontend-staff.rule=Host(`f2.irissoftware.lat`)"
-      - "traefik.http.services.petcare-frontend-staff.loadbalancer.server.port=80"
-      - "traefik.http.routers.petcare-frontend-staff.entrypoints=websecure"
-      - "traefik.http.routers.petcare-frontend-staff.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.petcare-frontend.rule=Host(`petcare.irissoftware.lat`)"
+      - "traefik.http.services.petcare-frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.petcare-frontend.entrypoints=websecure"
+      - "traefik.http.routers.petcare-frontend.tls.certresolver=letsencrypt"
 
 

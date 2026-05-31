@@ -1,0 +1,409 @@
+Vista del usuario | Requisitos
+Requisitos funcionales
+Usuarios
+Propietario
+Es el propietario de una mascota y el cliente de la clínica veterinaria, quien hace uso de los servicios de
+ésta. Las mascotas de éstos son los pacientes de los servicios clínicos.
+
+Necesidades
+•
+
+Registrarse en el sistema para acceder a los servicios como cliente.
+
+•
+
+Gestionar su perfil informativo de usuario y el de sus mascotas.
+
+•
+
+Agendar y cancelar citas en línea.
+
+•
+
+Consultar su historial de citas.
+
+•
+
+Ser notificado con recordatorios y confirmaciones de los eventos de cita programados.
+
+Recepcionista
+Es parte del personal de la clínica. Es el primer punto de atención a los propietarios; proveyéndoles
+información sobre los servicios ofrecidos y programando la prestación de los tales.
+
+Necesidades
+•
+
+Visualizar las citas del día en un tablero.
+
+•
+
+Consultar la disponibilidad de atención de los veterinarios en un calendario.
+
+•
+
+Registrar citas manualmente.
+
+•
+
+Registrar la asistencia de los pacientes a las citas.
+
+•
+
+Gestionar la lista de espera de atención de citas de los pacientes que asisten.
+
+•
+
+Consultar información de propietarios y su relación con las mascotas que les pertenecen.
+
+Veterinario
+Es el personal médico de la clínica. Atiende a los propietarios y sus mascotas. Realiza diagnósticos,
+prescribe y realiza tratamientos, y toma las decisiones clínicas para la mejora del bienestar de las
+mascotas.
+
+Necesidades
+•
+
+Visualizar la lista de pacientes del día.
+
+•
+
+Consultar los historiales clínicos completos de los pacientes.
+
+•
+
+Registrar la atención de consultas y la documentación relacionada con ellas.
+
+•
+
+Gestionar los planes de vacunación y desparasitación de los pacientes.
+
+Técnico Veterinario
+Es el personal especialista de inventario de la clínica. Gestiona el inventario, el catálogo de insumos y
+genera solicitudes de compra para reposición.
+
+Necesidades
+•
+
+Gestionar el catálogo de medicamentos y otros insumos (debe incluir costo).
+
+•
+
+Consultar existencias.
+
+•
+
+Registrar consumo y reposición de existencias.
+
+•
+
+Ser notificado con alertas de niveles mínimos de existencias y vencimiento de éstas.
+
+•
+
+Generar y consultar el estado de solicitudes de compra de insumos.
+
+•
+
+Comunicar al gerente las solicitudes de compra.
+
+Gerente
+Es el personal directivo de la clínica. Supervisa y dirige las operaciones del personal, toma decisiones
+tácticas y gestiona cambios organizacionales.
+
+Necesidades
+•
+
+Consultar y gestionar la aprobación de solicitudes de compra recibidas.
+
+•
+
+Visualizar el historial de solicitudes de compra aprobadas.
+
+•
+
+Visualizar indicadores clave de desempeño en un tablero.
+
+•
+
+Visualizar gráficas de ingresos.
+
+•
+
+Generar y exportar reportes por períodos.
+
+Requisitos adicionales
+•
+
+Sincronizar la información de las citas, la disponibilidad, la asistencia y las consultas.
+
+Compilación de requisitos funcionales
+1) Registrar usuarios propietarios.
+2) Gestionar perfiles informativos de propietarios y sus mascotas.
+2.1) Gestionar datos personales de propietarios.
+2.2) Gestionar la relación de las mascotas con sus propietarios.
+2.3) Gestionar datos de mascotas (pacientes).
+2.3.1) Gestionar características de las mascotas.
+2.3.2) Relacionar el perfil con el expediente e historial clínico.
+3) Gestionar expedientes de pacientes.
+3.1) Visualizar el estado actual del paciente.
+3.2) Gestionar el historial clínico y de consultas.
+3.2.1) Visualizar el historial clínico.
+3.2.2) Registrar consultas realizadas (asociar con citas).
+3.2.2.1) Registrar insumos utilizados (asociar con planes e inventario).
+3.2.3) Registrar documentación relacionada con el paciente.
+3.2.3.1) Registrar tratamientos y prescripciones (asociar con vacunas y desparasitación).
+3.3) Gestionar los planes de vacunación y desparasitación.
+3.3.1) Visualizar cronograma de vacunación y desparasitación.
+3.3.2) Gestionar insumos utilizados y prescripciones (asociar con inventario).
+3.3.3) Registrar eventos de vacunación y desparasitación del paciente.
+4) Gestionar citas de pacientes.
+4.1) Agendar citas en línea por parte del propietario.
+4.2) Cancelar citas en línea por parte del propietario.
+4.3) Visualizar citas de pacientes.
+4.3.1) Visualizar citas del día en un tablero.
+4.3.2) Visualizar lista de citas y pacientes del día por veterinario.
+4.4) Gestionar citas por parte del recepcionista.
+4.5) Mantener sincronizadas las citas con la disponibilidad de atención de los veterinarios.
+4.6) Notificar con recordatorios de los eventos de citas a los propietarios.
+
+4.7) Solicitar confirmación de asistencia a cita a los propietarios.
+4.8) Gestionar la lista de espera de atención de citas de los pacientes que asisten.
+4.9) Registrar la asistencia de los pacientes a las citas.
+4.10) Gestionar el estado de completación de las citas (asociar con consultas, vacunación y
+desparasitación).
+4.11) Consultar historial de citas por paciente y por propietario.
+5) Gestionar la disponibilidad de atención de los veterinarios.
+5.1) Consultar la disponibilidad de atención de los veterinarios en un calendario (asociar con
+citas).
+6) Gestionar el inventario de insumos.
+6.1) Gestionar el catálogo de medicamentos y otros insumos.
+6.1.1) Especificar el costo de los insumos.
+6.1.2) Especificar los niveles mínimos de existencias aceptados.
+6.1.3) Especificar las fechas de vencimiento de las existencias.
+6.2) Consultar existencias.
+6.3) Registrar consumo y reposición de existencias.
+6.4) Monitorizar niveles de existencias y ajuste a umbrales de nivel mínimo.
+6.5) Monitorizas fechas de vencimiento de existencias.
+6.6) Alertar de desviaciones en el control de existencias (niveles, fechas) al técnico veterinario.
+6.7) Gestionar solicitudes de compra de insumos.
+6.7.1) Generar solicitudes de compra de insumos.
+6.7.2) Consultar solicitudes de compra de insumos (asociar con gestión de aprobación).
+6.7.3) Gestionar aprobación de solicitudes de compra.
+6.7.3.1) Comunicar y solicitar aprobación de solicitudes al gerente.
+6.7.3.2) Aprobar o desaprobar solicitudes de compra por parte del gerente.
+6.7.3.3) Notificar de cambios de estado de aprobación de solicitudes.
+6.8) Visualizar el historial de solicitudes de compra aprobadas.
+7) Manejar información de desempeño y reportes.
+7.1) Calcular indicadores y métricas en tiempo real con la información disponible.
+
+7.2) Visualizar indicadores clave de desempeño en un tablero.
+7.3) Visualizar gráficas de ingresos.
+7.4) Generar y exportar reportes por períodos.
+
+Requisitos no funcionales
+Seguridad
+8) Controlar el acceso a la información y a las funciones con el uso de roles.
+8.1) Gestionar la autenticación de los usuarios (asociar con sesiones).
+8.1.1) Autenticar a los usuarios y relacionarlos con los roles.
+8.1.2) Administrar el cambio de información de seguridad de los usuarios.
+8.2) Gestionar la autorización de los usuarios.
+8.2.1) Verificar el permiso de los usuarios para acceder a cada vista de información y
+control.
+8.3) Gestionar sesiones de usuarios.
+8.3.1) Crear sesiones de usuarios autenticados.
+8.3.2) Anular la sesión de los usuarios luego de transcurrido un período de inactividad.
+8.4) Registrar el acceso de los usuarios a la información y funciones críticas.
+8.5) Consultar el registro de acceso.
+9) Cifrar información confidencial (incluye información personal sensible).
+10) Garantizar la consistencia, integridad y durabilidad de la información manejada.
+10.1) Realizar conjuntos de operaciones relacionadas de manera transaccional y atómica.
+10.2) Programar respaldos de los datos.
+
+Rendimiento
+11) Organizar los datos y los procesos para optimizar el rendimiento del sistema.
+11.1) Organizar para facilitar el cálculo de indicadores y métricas.
+11.2) Organizar para permitir la escalabilidad y expansión.
+11.3) Minimizar el tiempo de espera para la retroalimentación de las acciones de los usuarios.
+
+Usabilidad
+12) Agilizar los flujos de trabajo de los usuarios.
+12.1) Minimizar el tiempo requerido para alcanzar los fines de cada usuario.
+12.2) Controlar la carga de información presentada a la vez.
+
+12.3) Permitir la navegación a elementos relacionados con la información visualizada.
+12.4) Proveer indicaciones claras de acciones posibles y en curso.
+12.4.1) Utilizar descripciones y disposiciones fáciles de comprender.
+12.4.2) Advertir de acciones irreversibles o de alto impacto.
+
+Relación de los módulos con los requisitos
+General
+A continuación se indican los requisitos que deben satisfacer todos los módulos.
+8.1) Gestionar la autenticación
+de los usuarios
+
+8.3) Gestionar sesiones de
+usuarios
+
+11.3) Minimizar el tiempo de
+espera para la
+retroalimentación de las
+acciones de los usuarios
+
+Mayoritariamente Backend y Base de Datos (pero tomar en cuenta sus implicaciones en el
+Frontend y Seguridad)
+10.1) Realizar conjuntos de
+operaciones relacionadas de
+manera transaccional y
+atómica
+Tomar en cuenta que los
+procesos en curso pueden
+retroceder a una etapa anterior
+o fallar completamente
+
+Mayoritariamente Frontend (pero tomar en cuenta sus implicaciones en el Backend)
+12.1) Minimizar el tiempo
+requerido para alcanzar los
+fines de cada usuario
+Tomar en cuenta que la
+organización y diseño de
+servicios y operaciones en el
+backend tienen que apoyar para
+este fin
+
+Frontend
+Estos requisitos aplican a todos los módulos de Frontend.
+12) Agilizar los flujos de
+trabajo de los usuarios
+
+Seguridad
+Estos requisitos aplican al módulo transversal de Seguridad.
+1) Registrar usuarios
+propietarios
+
+8) Controlar el acceso a la
+información y a las funciones
+con el uso de roles
+
+9) Cifrar información
+confidencial
+
+Base de datos
+Estos requisitos aplican al módulo transversal de Base de Datos.
+Propietarios (1, 2.1, 2.2 y
+relación con citas)
+
+Pacientes/Mascotas (2.2, 2.3,
+3.1,
+
+Consultas médicas (3.2.2,
+3.2.3 y relación con citas)
+
+Tratamientos y prescripciones
+(3.2.3.1, 3.3.2 y relación con
+insumos)
+
+Vacunación y desparasitación
+(3.3)
+
+Citas (4, relación con
+consultas médicas, planes de
+vac. y desp., y disponibilidad)
+
+Recordatorios y
+confirmaciones (4.6, 4.7)
+
+Asistencia (4.8, 4.9)
+
+Horarios (4.1, 4.5, 5)
+
+Insumos (6.1)
+
+Consumo y reposición (6.3)
+
+Inventario (6)
+
+Solicitudes de compra (6.7,
+6.8)
+
+Registros de operaciones
+(incluye pero no se limita a 8.4
+y 8.5)
+
+Usuarios (8.1 y relación con
+propietarios y roles)
+
+Roles (8.2)
+
+Rendimiento (11)
+
+Módulos 1
+Incluye la participación de Propietarios, Recepcionistas y Veterinarios. Contempla el manejo de
+Registro de Propietarios, Perfiles, Expedientes, Citas y Agendas. Se indican a continuación los
+requisitos que deben satisfacer tanto Frontend como Backend.
+1) Registrar usuarios
+propietarios
+
+2) Gestionar perfiles
+informativos de propietarios y
+sus mascotas
+
+3) Gestionar expedientes de
+pacientes
+
+4.1) Agendar citas en línea por
+parte del propietario
+
+4.2) Cancelar citas en línea por
+parte del propietario
+
+4.3) Visualizar citas de
+pacientes
+
+4.4) Gestionar citas por parte
+del recepcionista
+
+4.7) Solicitar confirmación de
+asistencia a cita a los
+propietarios
+
+4.8) Gestionar la lista de
+espera de atención de citas de
+los pacientes que asisten
+
+4.9) Registrar la asistencia de
+los pacientes a las citas
+
+4.11) Consultar historial de
+citas por paciente y por
+propietario
+
+5) Gestionar la disponibilidad
+de atención de los veterinarios
+
+4.10) Gestionar el estado de
+completación de las citas
+
+Nótese que los módulos 1 deben coordinarse con los módulos 2 para desarrollar la solución a los
+requisitos 3.2.2.1 y 3.3.2 .
+
+Backend
+4.5) Mantener sincronizadas
+las citas con la disponibilidad
+de atención de los veterinarios
+
+4.6) Notificar con
+recordatorios de los eventos de
+citas a los propietarios
+
+Módulos 2
+Incluye la participación de Técnicos Veterinarios y Gerentes. Contempla el manejo de Inventario,
+Solicitudes de Compra, Gerencia, Indicadores y Reportes. Se indican a continuación los requisitos que
+deben satisfacer tanto Frontend como Backend.
+6) Gestionar el inventario de
+insumos
+
+7) Manejar información de
+desempeño y reportes
+
+Nótese que los módulos 2 deben prestar algo de funcionalidad a los módulos 1, en lo que se respecta a
+los requisitos 3.2.2.1 y 3.3.2 .

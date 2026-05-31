@@ -36,8 +36,7 @@ DATABASES = {
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
-    'https://f1.irissoftware.lat',
-    'https://f2.irissoftware.lat',
+    'https://petcare.irissoftware.lat',
     'http://localhost:4173',
     'http://localhost:4174',
     'http://127.0.0.1:4173',
@@ -48,8 +47,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://bpetcare.irissoftware.lat',
     'https://bpetcare.irrissoftware.lat',
-    'https://f1.irissoftware.lat',
-    'https://f2.irissoftware.lat',
+    'https://petcare.irissoftware.lat',
 ]
 
 # Static Files (Nginx servirá estos archivos directamente en producción, o WhiteNoise si se expone directo)
