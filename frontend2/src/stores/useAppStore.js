@@ -515,6 +515,7 @@ export const useAppStore = defineStore('app', {
         category: supplyData.category || 'CONSUMABLE',
         description: supplyData.description || '',
         min_stock: supplyData.min_stock || supplyData.umbral || 10,
+        initial_stock: supplyData.initial_stock || 0,
       };
       const res = await http.post('/api/v1/inventory/supplies/', payload);
       const item = normalizeInventoryItem({

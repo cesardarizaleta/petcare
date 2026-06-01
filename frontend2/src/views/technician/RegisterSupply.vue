@@ -16,6 +16,7 @@ const EMPTY_FORM = {
   nombre: '',
   categoria: '',
   umbral: '',
+  stock_inicial: 0,
   observaciones: '',
 };
 
@@ -39,6 +40,15 @@ async function handleSubmit() {
     return;
   }
 
+  if (form.value.stock_inicial !== '' && form.value.stock_inicial !== null && Number(form.value.stock_inicial) < 0) {
+    toastStore.push({
+      title: 'Error de validación',
+      description: 'El stock inicial no puede ser negativo.',
+      type: 'error'
+    });
+    return;
+  }
+
   loading.value = true;
   try {
     await appStore.addSupply({
@@ -46,11 +56,12 @@ async function handleSubmit() {
       category: form.value.categoria,
       description: form.value.observaciones || '',
       min_stock: Number(form.value.umbral),
+      initial_stock: Number(form.value.stock_inicial) || 0,
     });
 
     toastStore.push({
       title: 'Insumo registrado',
-      description: `${form.value.nombre} fue agregado al catálogo maestro.`,
+      description: `${form.value.nombre} fue agregado al catálogo maestro con ${Number(form.value.stock_inicial) || 0} unidades iniciales.`,
       type: 'success',
     });
 
@@ -103,6 +114,17 @@ async function handleSubmit() {
             min="1"
             required
             placeholder="Ejemplo: 10"
+          />
+        </div>
+        <div class="field">
+          <label for="stock_inicial">Stock inicial (Existencia disponible)</label>
+          <input
+            class="input"
+            id="stock_inicial"
+            v-model.number="form.stock_inicial"
+            type="number"
+            min="0"
+            placeholder="Ejemplo: 30"
           />
         </div>
         <div class="field">

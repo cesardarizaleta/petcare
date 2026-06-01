@@ -93,6 +93,7 @@ class SupplyCreateSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True, default='')
     min_stock = serializers.IntegerField(min_value=1, default=10)
     sku = serializers.CharField(max_length=50, required=False)
+    initial_stock = serializers.IntegerField(min_value=0, required=False, default=0)
 
     def validate_sku(self, value):
         if value and Supply.objects.filter(sku=value).exists():
@@ -100,10 +101,24 @@ class SupplyCreateSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
+        initial_stock = validated_data.pop('initial_stock', 0)
         if not validated_data.get('sku'):
             import uuid
             validated_data['sku'] = f"SKU-{str(uuid.uuid4())[:8].upper()}"
-        return Supply.objects.create(**validated_data)
+        supply = Supply.objects.create(**validated_data)
+
+        if initial_stock > 0:
+            import datetime
+            from decimal import Decimal
+            SupplyBatch.objects.create(
+                supply=supply,
+                lot_number="LOTE-INICIAL",
+                expiration_date=datetime.date.today() + datetime.timedelta(days=365),
+                initial_stock=initial_stock,
+                current_stock=initial_stock,
+                acquisition_cost=Decimal("0.00")
+            )
+        return supply
 
 
 class SupplyUpdateSerializer(serializers.ModelSerializer):
