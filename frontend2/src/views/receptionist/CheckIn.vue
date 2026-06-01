@@ -4,6 +4,7 @@
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
+  import { extractApiError } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -21,7 +22,7 @@
         type: 'success',
       });
     } catch (e) {
-      toastStore.push({ title: 'Error al confirmar', type: 'error' });
+      toastStore.push({ title: 'Error al confirmar', description: extractApiError(e), type: 'error' });
     }
   }
 
@@ -34,7 +35,7 @@
         type: 'success',
       });
     } catch (e) {
-      toastStore.push({ title: 'Error en check-in', type: 'error' });
+      toastStore.push({ title: 'Error en check-in', description: extractApiError(e), type: 'error' });
     }
   }
 
@@ -47,7 +48,7 @@
         type: 'info',
       });
     } catch (e) {
-      toastStore.push({ title: 'Error al cancelar', type: 'error' });
+      toastStore.push({ title: 'Error al cancelar', description: extractApiError(e), type: 'error' });
     }
   }
 </script>

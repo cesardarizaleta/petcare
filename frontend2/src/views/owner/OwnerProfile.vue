@@ -3,6 +3,7 @@
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
+  import { extractApiError } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -65,7 +66,7 @@
       console.error(err);
       toastStore.push({
         title: 'Error al guardar perfil',
-        description: 'No se pudieron actualizar los datos en el servidor.',
+        description: extractApiError(err, 'No se pudieron actualizar los datos en el servidor.'),
         type: 'error',
       });
     } finally {

@@ -15,28 +15,7 @@ export const useAppStore = defineStore('app', {
     vaccines: [],
     dewormings: [],
     waitingList: [],
-    inventory: [
-      {
-        id: '125ea412-4174-447c-abcb-7949c4223a9f',
-        sku: 'MED-AMOX-500',
-        name: 'Amoxicilina 500mg',
-        type: 'Medicamento',
-        quantity: 0,
-        unitCost: 12.50,
-        umbral: 50,
-        batches: [],
-      },
-      {
-        id: '6901435e-3572-4f85-a2a6-68ca238502fc',
-        sku: 'CON-GUA-LIT',
-        name: 'Guantes de Látex',
-        type: 'Insumo',
-        quantity: 0,
-        unitCost: 1.50,
-        umbral: 100,
-        batches: [],
-      }
-    ],
+    inventory: [],
     requisitions: [],
   }),
   getters: {
@@ -220,6 +199,7 @@ export const useAppStore = defineStore('app', {
           email: owner.user.email,
           phone: owner.phone || '',
           address: owner.address || '',
+          dni: owner.dni || '',
           createdAt: owner.created_at ? owner.created_at.slice(0, 10) : '',
         }));
         this.owners = mappedOwners;
@@ -228,6 +208,56 @@ export const useAppStore = defineStore('app', {
         console.error('fetchOwners error:', e);
         return [];
       }
+    },
+
+    async fetchOwnerById(id) {
+      const res = await http.get(`/api/v1/owners/${id}/`);
+      const data = res.data;
+      const mappedOwner = {
+        id: data.id,
+        name: `${data.user.first_name} ${data.user.last_name}`.trim() || data.user.email,
+        email: data.user.email,
+        phone: data.phone || '',
+        address: data.address || '',
+        dni: data.dni || '',
+        createdAt: data.created_at ? data.created_at.slice(0, 10) : '',
+      };
+      const exists = this.owners.find(o => o.id === data.id);
+      if (exists) {
+        this.owners = this.owners.map(o => o.id === data.id ? mappedOwner : o);
+      } else {
+        this.owners.push(mappedOwner);
+      }
+      return mappedOwner;
+    },
+
+    async updateOwnerById(id, formData) {
+      const nameParts = formData.name.trim().split(' ');
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+      
+      const patchPayload = {
+        first_name,
+        last_name,
+        phone: formData.phone,
+        address: formData.address,
+        dni: formData.dni,
+      };
+      
+      const res = await http.patch(`/api/v1/owners/${id}/`, patchPayload);
+      const data = res.data;
+      const mappedOwner = {
+        id: data.id,
+        name: `${data.user.first_name} ${data.user.last_name}`.trim(),
+        email: data.user.email,
+        phone: data.phone || '',
+        address: data.address || '',
+        dni: data.dni || '',
+        createdAt: data.created_at ? data.created_at.slice(0, 10) : '',
+      };
+      
+      this.owners = this.owners.map(o => o.id === data.id ? mappedOwner : o);
+      return mappedOwner;
     },
 
     async fetchPets() {
@@ -399,6 +429,7 @@ export const useAppStore = defineStore('app', {
           id: entry.id,
           patientName: entry.patient_name,
           ownerName: entry.owner_name,
+          ownerId: entry.owner_id,
           appointmentId: entry.appointment_id,
           priority: entry.priority,
           status: entry.status,
@@ -463,48 +494,32 @@ export const useAppStore = defineStore('app', {
     //  INVENTORY & REQUISITIONS (B2 - already working)
     // ==============================
     async fetchInventory() {
-      const res = await http.get('/api/v1/inventory/batches/');
-      const batches = res.data;
-      
-      this.inventory = this.inventory.map(item => {
+      const res = await http.get('/api/v1/inventory/supplies/');
+      this.inventory = res.data.map(item => {
         const savedUmbral = localStorage.getItem(`inventory_umbral_${item.id}`);
-        const currentUmbral = savedUmbral !== null ? parseInt(savedUmbral, 10) : item.umbral;
-        
-        const itemBatches = batches.filter(b => b.supply === item.id);
-        const totalQty = itemBatches.reduce((sum, b) => sum + b.quantity, 0);
         return {
           ...item,
-          umbral: currentUmbral,
-          quantity: totalQty,
-          batches: itemBatches.map(b => ({
-            batch: b.batch,
-            expirationDate: b.expirationDate,
-            quantity: b.quantity,
-            initialStock: b.initial_stock || b.quantity
-          }))
+          umbral: savedUmbral !== null ? parseInt(savedUmbral, 10) : item.umbral,
         };
       });
       normalizeInventory(this.inventory);
     },
 
     normalizeInventory() {
-      // Sincronizar umbrales desde localStorage al normalizar
-      this.inventory = this.inventory.map(item => {
-        const savedUmbral = localStorage.getItem(`inventory_umbral_${item.id}`);
-        if (savedUmbral !== null) {
-          item.umbral = parseInt(savedUmbral, 10);
-        }
-        return item;
-      });
       normalizeInventory(this.inventory);
     },
 
-    addSupply(supply) {
+    async addSupply(supplyData) {
+      const payload = {
+        name: supplyData.name,
+        category: supplyData.category || 'CONSUMABLE',
+        description: supplyData.description || '',
+        min_stock: supplyData.min_stock || supplyData.umbral || 10,
+      };
+      const res = await http.post('/api/v1/inventory/supplies/', payload);
       const item = normalizeInventoryItem({
-        ...supply,
-        batches: supply.batches ?? [],
+        ...res.data,
       });
-      localStorage.setItem(`inventory_umbral_${item.id}`, item.umbral);
       this.inventory.push(item);
       return item;
     },

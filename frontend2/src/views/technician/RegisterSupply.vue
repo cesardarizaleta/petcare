@@ -5,11 +5,16 @@ import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { useAppStore } from '@/stores/useAppStore';
 import { useToastStore } from '@/stores/useToastStore';
 
+const CATEGORY_OPTIONS = [
+  { value: 'MEDICINE', label: 'Medicamento' },
+  { value: 'VACCINE', label: 'Vacuna' },
+  { value: 'CONSUMABLE', label: 'Consumible' },
+  { value: 'EQUIPMENT', label: 'Equipo' },
+];
+
 const EMPTY_FORM = {
   nombre: '',
-  tipo: '',
-  cantidad: '',
-  precio: '',
+  categoria: '',
   umbral: '',
   observaciones: '',
 };
@@ -24,33 +29,7 @@ const resetForm = () => {
   Object.assign(form.value, EMPTY_FORM);
 };
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
 async function handleSubmit() {
-  if (form.value.cantidad !== '' && Number(form.value.cantidad) < 0) {
-    toastStore.push({
-      title: 'Error de validación',
-      description: 'La cantidad disponible no puede ser negativa.',
-      type: 'error'
-    });
-    return;
-  }
-
-  if (form.value.precio !== '' && Number(form.value.precio) < 0) {
-    toastStore.push({
-      title: 'Error de validación',
-      description: 'El costo unitario no puede ser negativo.',
-      type: 'error'
-    });
-    return;
-  }
-
   if (form.value.umbral === '' || form.value.umbral === null || Number(form.value.umbral) < 1) {
     toastStore.push({
       title: 'Error de validación',
@@ -62,17 +41,11 @@ async function handleSubmit() {
 
   loading.value = true;
   try {
-    // Simulated premium micro-delay for realistic API communication
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    
-    appStore.addSupply({
-      id: generateUUID(),
+    await appStore.addSupply({
       name: form.value.nombre,
-      type: form.value.tipo,
-      quantity: Number(form.value.cantidad),
-      unitCost: Number(form.value.precio),
-      umbral: Number(form.value.umbral),
-      batches: [],
+      category: form.value.categoria,
+      description: form.value.observaciones || '',
+      min_stock: Number(form.value.umbral),
     });
 
     toastStore.push({
@@ -84,7 +57,8 @@ async function handleSubmit() {
     resetForm();
   } catch (err) {
     console.error(err);
-    toastStore.push({ title: 'Error al registrar', type: 'error' });
+    const detail = err.response?.data?.detail || err.response?.data?.name?.[0] || err.response?.data?.sku?.[0] || 'Hubo un error al registrar el insumo.';
+    toastStore.push({ title: 'Error al registrar', description: detail, type: 'error' });
   } finally {
     loading.value = false;
   }
@@ -111,37 +85,13 @@ async function handleSubmit() {
           />
         </div>
         <div class="field">
-          <label for="tipo">Tipo*</label>
-          <select class="select" id="tipo" v-model="form.tipo" required>
+          <label for="categoria">Categoría*</label>
+          <select class="select" id="categoria" v-model="form.categoria" required>
             <option value="" disabled>Seleccionar...</option>
-            <option>Medicamento</option>
-            <option>Insumo</option>
+            <option v-for="cat in CATEGORY_OPTIONS" :key="cat.value" :value="cat.value">
+              {{ cat.label }}
+            </option>
           </select>
-        </div>
-        <div class="field">
-          <label for="cantidad">Cantidad*</label>
-          <input
-            class="input"
-            id="cantidad"
-            v-model="form.cantidad"
-            type="number"
-            min="1"
-            required
-            placeholder="Cantidad disponible"
-          />
-        </div>
-        <div class="field">
-          <label for="precio">Costo unitario (USD)*</label>
-          <input
-            class="input"
-            id="precio"
-            v-model="form.precio"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            placeholder="Costo por unidad"
-          />
         </div>
         <div class="field">
           <label for="umbral">Nivel mínimo de existencias*</label>
@@ -156,7 +106,7 @@ async function handleSubmit() {
           />
         </div>
         <div class="field">
-          <label for="observaciones">Observaciones</label>
+          <label for="observaciones">Descripción / Observaciones</label>
           <textarea
             class="textarea"
             id="observaciones"

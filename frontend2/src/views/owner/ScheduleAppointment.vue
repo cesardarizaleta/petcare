@@ -4,7 +4,7 @@
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { getOwnerPets, timeSlots, todayISO } from '@/lib/petcare';
+  import { getOwnerPets, timeSlots, todayISO, extractApiError } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -134,7 +134,7 @@
       router.push('/portal/appointments');
     } catch (err) {
       console.error(err);
-      toastStore.push({ title: 'Error', description: 'No se pudo registrar la cita.', type: 'error' });
+      toastStore.push({ title: 'Error', description: extractApiError(err, 'No se pudo registrar la cita.'), type: 'error' });
     } finally {
       loading.value = false;
     }

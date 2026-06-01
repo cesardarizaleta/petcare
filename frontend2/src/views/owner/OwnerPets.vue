@@ -11,6 +11,8 @@
     getLatestDeworming,
     getLatestVaccine,
     getOwnerPets,
+    extractApiError,
+    todayISO,
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
@@ -45,6 +47,26 @@
       return;
     }
 
+    const todayStr = todayISO();
+    if (form.birthDate > todayStr) {
+      toastStore.push({
+        title: 'Fecha de nacimiento inválida',
+        description: 'La fecha de nacimiento no puede ser en el futuro.',
+        type: 'error',
+      });
+      return;
+    }
+
+    const weightVal = Number(form.weight);
+    if (form.weight !== '' && (isNaN(weightVal) || weightVal <= 0 || weightVal > 100)) {
+      toastStore.push({
+        title: 'Peso inválido',
+        description: 'El peso de la mascota debe estar entre 0.1 kg y 100 kg.',
+        type: 'error',
+      });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.addPet({
@@ -72,9 +94,19 @@
       form.notes = '';
     } catch (err) {
       console.error(err);
-      toastStore.push({ title: 'Error', description: 'No se pudo registrar la mascota.', type: 'error' });
+      toastStore.push({ title: 'Error', description: extractApiError(err, 'No se pudo registrar la mascota.'), type: 'error' });
     } finally {
       loading.value = false;
+    }
+  }
+
+  function sanitizeWeight() {
+    if (form.weight === '') return;
+    const val = Number(form.weight);
+    if (val > 100) {
+      form.weight = 100;
+    } else if (val < 0) {
+      form.weight = 0.1;
     }
   }
 </script>
@@ -137,14 +169,14 @@
             /></label>
           </div>
           <div class="input-grid">
-            <label class="field"
-              ><span>Fecha de nacimiento *</span
-              ><input v-model="form.birthDate" class="input" type="date"
-            /></label>
-            <label class="field"
-              ><span>Peso</span
-              ><input v-model="form.weight" class="input" type="number" min="0" step="0.1"
-            /></label>
+            <label class="field">
+              <span>Fecha de nacimiento *</span>
+              <input v-model="form.birthDate" class="input" type="date" :max="todayISO()" required />
+            </label>
+            <label class="field">
+              <span>Peso (kg)</span>
+              <input v-model="form.weight" class="input" type="number" min="0.1" max="100" step="0.1" placeholder="Ej: 12.5" @input="sanitizeWeight" />
+            </label>
           </div>
           <label class="field"
             ><span>Color</span><input v-model="form.color" class="input" type="text"

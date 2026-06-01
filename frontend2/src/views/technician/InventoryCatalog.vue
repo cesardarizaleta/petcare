@@ -59,11 +59,12 @@ function handleUmbralChange(item) {
     />
 
     <DashboardCard title="Vista General del Inventario" icon="syringe">
-      <section class="table-wrap inventory-table-wrap">
+      <section v-if="inventory.length > 0" class="table-wrap inventory-table-wrap">
         <table class="table">
           <thead>
             <tr>
               <th>Nombre del insumo</th>
+              <th>Categoría</th>
               <th>Cantidad disponible</th>
               <th>Stock mínimo</th>
               <th>Costo unitario</th>
@@ -92,6 +93,7 @@ function handleUmbralChange(item) {
                   </span>
                 </span>
               </td>
+              <td>{{ item.type }}</td>
               <td>{{ item.quantity }} uds.</td>
               <td>
                 <input
@@ -108,6 +110,9 @@ function handleUmbralChange(item) {
           </tbody>
         </table>
       </section>
+      <p v-else class="empty-state">
+        No hay insumos en el catálogo. Registre uno desde la sección "Registrar Insumos".
+      </p>
     </DashboardCard>
   </div>
 </template>
@@ -184,5 +189,11 @@ function handleUmbralChange(item) {
 .inventory-row--warning:hover .inventory-tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(61, 61, 61, 0.6);
 }
 </style>

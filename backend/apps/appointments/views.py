@@ -318,6 +318,23 @@ def appointment_check_in(request, id):
     except Appointment.DoesNotExist:
         return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    # Guard: prevent duplicate check-in
+    if appt.status == "CHECKED_IN":
+        return Response(
+            {"error": "Esta cita ya fue registrada en sala de espera."},
+            status=status.HTTP_409_CONFLICT,
+        )
+    if appt.status == "COMPLETED":
+        return Response(
+            {"error": "No se puede hacer check-in de una cita ya completada."},
+            status=status.HTTP_409_CONFLICT,
+        )
+    if appt.status == "CANCELLED":
+        return Response(
+            {"error": "No se puede hacer check-in de una cita cancelada."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     appt.status = "CHECKED_IN"
     appt.checked_in_at = timezone.now()
     appt.save()
@@ -404,6 +421,7 @@ def waiting_list(request):
             "id": entry.id,
             "patient_name": entry.patient.name,
             "owner_name": owner_name,
+            "owner_id": str(owner.pk) if owner else None,
             "appointment_id": entry.appointment_id,
             "priority": entry.priority_level,
             "status": entry.status,

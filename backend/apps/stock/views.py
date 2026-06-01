@@ -119,3 +119,26 @@ class InventoryConsumeView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
+
+
+from rest_framework import viewsets
+from apps.stock.serializers import SupplyReadSerializer, SupplyCreateSerializer, SupplyUpdateSerializer
+
+class SupplyViewSet(viewsets.ModelViewSet):
+    """CRUD completo para insumos del catálogo maestro."""
+    permission_classes = [IsAuthenticated]
+    queryset = Supply.objects.prefetch_related('batches').all().order_by('name')
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SupplyCreateSerializer
+        if self.action in ('update', 'partial_update'):
+            return SupplyUpdateSerializer
+        return SupplyReadSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = SupplyCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        supply = serializer.save()
+        read_serializer = SupplyReadSerializer(supply)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)

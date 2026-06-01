@@ -179,3 +179,31 @@ export const timeSlots = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
   '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00',
 ];
+
+/**
+ * Extrae un mensaje legible de un error Axios del backend.
+ * Soporta: { error: "..." }, { detail: "..." }, { message: "..." },
+ * errores de validación DRF { field: ["msg"] }, y fallback genérico.
+ */
+export function extractApiError(err, fallback = 'Ocurrió un error inesperado.') {
+  const data = err?.response?.data;
+  if (!data) return err?.message || fallback;
+
+  // Respuesta directa con campo error, detail o message
+  if (typeof data === 'string') return data;
+  if (data.error) return data.error;
+  if (data.detail) return data.detail;
+  if (data.message) return data.message;
+
+  // Errores de validación DRF: { field: ["msg1", "msg2"] }
+  const fieldErrors = Object.entries(data)
+    .filter(([, v]) => Array.isArray(v))
+    .map(([key, msgs]) => `${key}: ${msgs.join(', ')}`)
+    .join(' | ');
+  if (fieldErrors) return fieldErrors;
+
+  // Non-field errors
+  if (data.non_field_errors) return data.non_field_errors.join(', ');
+
+  return fallback;
+}

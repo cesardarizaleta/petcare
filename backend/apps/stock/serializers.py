@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import models
 from django.utils import timezone
 from apps.stock.models import Supply, SupplyBatch
 
@@ -46,3 +47,71 @@ class AlertItemSerializer(serializers.Serializer):
     days_remaining = serializers.IntegerField(required=False)
     batch_id = serializers.UUIDField(required=False)
     lot_number = serializers.CharField(required=False)
+
+
+class SupplyReadSerializer(serializers.ModelSerializer):
+    """Read serializer that includes computed stock from active batches."""
+    quantity = serializers.SerializerMethodField()
+    unitCost = serializers.SerializerMethodField()
+    umbral = serializers.IntegerField(source='min_stock')
+    type = serializers.CharField(source='get_category_display')
+    batches = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Supply
+        fields = ['id', 'sku', 'name', 'type', 'category', 'description', 'quantity', 'unitCost', 'umbral', 'batches']
+
+    def get_quantity(self, obj):
+        today = timezone.now().date()
+        total = obj.batches.filter(
+            expiration_date__gt=today, current_stock__gt=0
+        ).aggregate(total=models.Sum('current_stock'))['total']
+        return total or 0
+
+    def get_unitCost(self, obj):
+        latest = obj.batches.order_by('-created_at').first()
+        if latest:
+            return float(latest.acquisition_cost)
+        return 0.0
+
+    def get_batches(self, obj):
+        today = timezone.now().date()
+        active_batches = obj.batches.filter(
+            expiration_date__gt=today, current_stock__gt=0
+        ).order_by('expiration_date')
+        return [{
+            'batch': b.lot_number,
+            'expirationDate': str(b.expiration_date),
+            'quantity': b.current_stock,
+            'initialStock': b.initial_stock,
+        } for b in active_batches]
+
+
+class SupplyCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=150)
+    category = serializers.ChoiceField(choices=Supply.CATEGORY_CHOICES)
+    description = serializers.CharField(required=False, allow_blank=True, default='')
+    min_stock = serializers.IntegerField(min_value=1, default=10)
+    sku = serializers.CharField(max_length=50, required=False)
+
+    def validate_sku(self, value):
+        if value and Supply.objects.filter(sku=value).exists():
+            raise serializers.ValidationError('Ya existe un insumo con este SKU.')
+        return value
+
+    def create(self, validated_data):
+        if not validated_data.get('sku'):
+            import uuid
+            validated_data['sku'] = f"SKU-{str(uuid.uuid4())[:8].upper()}"
+        return Supply.objects.create(**validated_data)
+
+
+class SupplyUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supply
+        fields = ['name', 'category', 'description', 'min_stock', 'sku']
+        extra_kwargs = {
+            'name': {'required': False},
+            'category': {'required': False},
+            'sku': {'required': False},
+        }

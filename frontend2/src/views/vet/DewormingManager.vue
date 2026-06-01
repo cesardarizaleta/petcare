@@ -3,7 +3,7 @@
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { formatDate, todayISO } from '@/lib/petcare';
+  import { formatDate, todayISO, extractApiError } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -72,7 +72,7 @@
       form.notes = '';
     } catch (error) {
       console.error(error);
-      toastStore.push({ title: 'Error al guardar', type: 'error' });
+      toastStore.push({ title: 'Error al guardar', description: extractApiError(error), type: 'error' });
     } finally {
       loading.value = false;
     }

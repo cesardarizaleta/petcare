@@ -4,6 +4,7 @@
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
+  import { extractApiError } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -21,7 +22,7 @@
         type: 'info',
       });
     } catch (e) {
-      toastStore.push({ title: 'Error al llamar paciente', type: 'error' });
+      toastStore.push({ title: 'Error al llamar paciente', description: extractApiError(e), type: 'error' });
     }
   }
 </script>
@@ -44,7 +45,19 @@
             <div class="list__item-main">
               <p class="list__title">{{ entry.patientName }}</p>
               <p class="list__subtitle">
-                Propietario: {{ entry.ownerName }} · Prioridad: {{ entry.priority }}
+                Propietario: 
+                <router-link 
+                  v-slot="{ navigate }" 
+                  v-if="entry.ownerId" 
+                  :to="`/reception/owners?id=${entry.ownerId}`" 
+                  custom
+                >
+                  <span class="owner-link" @click="navigate" role="link">
+                    {{ entry.ownerName }}
+                  </span>
+                </router-link>
+                <span v-else>{{ entry.ownerName }}</span>
+                · Prioridad: {{ entry.priority }}
               </p>
             </div>
           </div>
@@ -66,3 +79,16 @@
     </section>
   </div>
 </template>
+
+<style scoped>
+  .owner-link {
+    color: var(--brand-strong);
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.16s ease;
+  }
+  .owner-link:hover {
+    color: var(--brand);
+  }
+</style>

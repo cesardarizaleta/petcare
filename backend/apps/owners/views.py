@@ -53,19 +53,24 @@ class OwnerListView(generics.ListAPIView):
         return Owner.objects.select_related('user', 'natural_person').all()
 
 
-class OwnerDetailView(generics.RetrieveAPIView):
+class OwnerDetailView(generics.RetrieveUpdateAPIView):
     """
     GET /api/v1/owners/{id}/ — Ver el perfil de un propietario por su ID.
+    PATCH /api/v1/owners/{id}/ — Actualizar datos de un propietario por su ID.
 
     Acceso: Exclusivo para RECEPTIONIST.
     Optimización: select_related('user') obligatorio para evitar N+1.
     """
 
     permission_classes = [IsAuthenticated, IsReceptionist]
-    serializer_class = OwnerProfileSerializer
 
     def get_queryset(self):
         return Owner.objects.select_related('user', 'natural_person').all()
+
+    def get_serializer_class(self):
+        if self.request.method in ('PUT', 'PATCH'):
+            return OwnerUpdateSerializer
+        return OwnerProfileSerializer
 
 
 class OwnerMePetsView(generics.GenericAPIView):

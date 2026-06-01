@@ -65,9 +65,37 @@
     { immediate: true, deep: true }
   );
 
+  const minDate = todayISO();
+  const maxDate = computed(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    return d.toISOString().slice(0, 10);
+  });
+
   async function saveAppointment() {
-    if (!form.patientId || !form.reason) {
+    if (!form.patientId || !form.reason || !form.date) {
       toastStore.push({ title: 'Completa los campos requeridos', type: 'error' });
+      return;
+    }
+
+    const todayStr = todayISO();
+    const maxStr = maxDate.value;
+
+    if (form.date < todayStr) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'No se pueden programar citas en el pasado.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (form.date > maxStr) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'La cita no puede programarse con más de 6 meses de anticipación.',
+        type: 'error',
+      });
       return;
     }
 
@@ -130,8 +158,8 @@
           </label>
           <div class="input-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
             <label class="field">
-              <span>Fecha</span>
-              <input v-model="form.date" class="input" type="date" />
+              <span>Fecha *</span>
+              <input v-model="form.date" class="input" type="date" :min="minDate" :max="maxDate" required />
             </label>
             <label class="field">
               <span>Hora</span>
