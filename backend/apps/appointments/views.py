@@ -87,43 +87,66 @@ def _appointment_queryset():
 def vet_slots(request, vet_id):
     """
     GET /api/v1/vets/{vet_id}/slots/
-    Return free time-slots for a vet.  If none exist, auto-create schedules
-    for today + next 5 days with 30-min slots from 09:00 to 17:00.
+    Return free time-slots for a vet. Auto-creates schedules/slots for any days 
+    in the next 180 days (6 months) that are missing, then returns all free slots in that range.
     """
+    from apps.users.models import Veterinarian
+    try:
+        vet = Veterinarian.objects.get(pk=vet_id)
+    except Veterinarian.DoesNotExist:
+        return Response({"error": "Veterinarian not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    local_now = timezone.localtime(timezone.now())
+    today = local_now.date()
+    end_date = today + timedelta(days=180)
+
+    # 1. Encontrar qué fechas en el rango [today, end_date] ya tienen agenda creada
+    existing_schedules = VetSchedule.objects.filter(
+        vet=vet,
+        start_date__gte=today,
+        start_date__lte=end_date
+    ).values_list('start_date', flat=True)
+    existing_dates = set(existing_schedules)
+
+    # 2. Identificar fechas faltantes
+    missing_dates = []
+    for day_offset in range(181):  # 0 a 180 días inclusive
+        day = today + timedelta(days=day_offset)
+        if day not in existing_dates:
+            missing_dates.append(day)
+
+    # 3. Crear agendas y slots para las fechas faltantes de forma atómica y optimizada
+    if missing_dates:
+        from django.db import transaction
+        with transaction.atomic():
+            for day in missing_dates:
+                schedule = VetSchedule.objects.create(vet=vet, start_date=day, end_date=day)
+                hour, minute = 9, 0
+                slots_to_create = []
+                while hour < 17:
+                    start = time(hour, minute)
+                    end_minute = minute + 30
+                    end_hour = hour
+                    if end_minute >= 60:
+                        end_minute -= 60
+                        end_hour += 1
+                    end = time(end_hour, end_minute)
+                    slots_to_create.append(
+                        TimeSlot(schedule=schedule, start_time=start, end_time=end, status="FREE")
+                    )
+                    minute += 30
+                    if minute >= 60:
+                        minute -= 60
+                        hour += 1
+                TimeSlot.objects.bulk_create(slots_to_create)
+
+    # 4. Retornar todos los slots libres dentro del rango de 180 días
     slots = TimeSlot.objects.filter(
-        schedule__vet_id=vet_id, status="FREE"
+        schedule__vet_id=vet_id,
+        status="FREE",
+        schedule__start_date__gte=today,
+        schedule__start_date__lte=end_date
     ).select_related("schedule")
-
-    if not slots.exists():
-        # Auto-create schedule + slots
-        from apps.users.models import Veterinarian
-        try:
-            vet = Veterinarian.objects.get(pk=vet_id)
-        except Veterinarian.DoesNotExist:
-            return Response({"error": "Veterinarian not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        today = timezone.now().date()
-        for day_offset in range(6):  # today + 5 days
-            day = today + timedelta(days=day_offset)
-            schedule = VetSchedule.objects.create(vet=vet, start_date=day, end_date=day)
-            hour, minute = 9, 0
-            while hour < 17:
-                start = time(hour, minute)
-                end_minute = minute + 30
-                end_hour = hour
-                if end_minute >= 60:
-                    end_minute -= 60
-                    end_hour += 1
-                end = time(end_hour, end_minute)
-                TimeSlot.objects.create(schedule=schedule, start_time=start, end_time=end, status="FREE")
-                minute += 30
-                if minute >= 60:
-                    minute -= 60
-                    hour += 1
-
-        slots = TimeSlot.objects.filter(
-            schedule__vet_id=vet_id, status="FREE"
-        ).select_related("schedule")
 
     data = [
         {
