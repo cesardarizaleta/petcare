@@ -53,13 +53,13 @@ class SupplyReadSerializer(serializers.ModelSerializer):
     """Read serializer that includes computed stock from active batches."""
     quantity = serializers.SerializerMethodField()
     unitCost = serializers.SerializerMethodField()
-    umbral = serializers.IntegerField(source='min_stock')
+    min_stock = serializers.IntegerField(source='min_stock')
     type = serializers.CharField(source='get_category_display')
     batches = serializers.SerializerMethodField()
 
     class Meta:
         model = Supply
-        fields = ['id', 'sku', 'name', 'type', 'category', 'description', 'quantity', 'unitCost', 'umbral', 'batches']
+        fields = ['id', 'sku', 'name', 'type', 'category', 'description', 'quantity', 'unitCost', 'min_stock', 'batches']
 
     def get_quantity(self, obj):
         today = timezone.now().date()
