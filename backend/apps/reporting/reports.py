@@ -6,16 +6,16 @@ from django.db.models import Sum
 from apps.appointments.models import Appointment
 from apps.stock.models import Supply, SupplyBatch, PurchaseOrder
 
-def get_date_range(periodo, start_date=None, end_date=None):
+def get_date_range(periodo, from_date=None, to_date=None):
     """
-    Returns (start_date, end_date) as datetime.date objects for the selected period.
+    Returns (from_date, to_date) as datetime.date objects for the selected period.
     """
-    if start_date and end_date:
-        if isinstance(start_date, str):
-            start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
-        if isinstance(end_date, str):
-            end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
-        return start_date, end_date
+    if from_date and to_date:
+        if isinstance(from_date, str):
+            from_date = datetime.datetime.strptime(from_date, '%Y-%m-%d').date()
+        if isinstance(to_date, str):
+            to_date = datetime.datetime.strptime(to_date, '%Y-%m-%d').date()
+        return from_date, to_date
 
     today = timezone.localtime(timezone.now()).date()
 

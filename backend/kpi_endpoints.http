@@ -1,18 +1,48 @@
 ### PetCare Backend Reporting & Performance API Requests
 
+# Global variables for testing environment
+@baseUrl = http://localhost:8000
+@token = YOUR_JWT_ACCESS_TOKEN_HERE
+
 ###
-# @name 2_GetDashboardSummary
-# 2. Tablero de Control / Dashboard Gerencial Unificado
-# Devuelve los KPIs agregados y los datos del gráfico de ingresos en tiempo real.
+# @name 1_LoginManager
+# 1. Get JWT Access Token (Manager Role)
+# This request logs in and returns the access token required for metrics.
+POST {{baseUrl}}/api/v1/auth/login/
+Content-Type: application/json
+
+{
+  "email": "manager_test@petcare.com",
+  "password": "Password123!"
+}
+
+### Expected Response (200 OK):
+# {
+#   "access": "eyJhbGciOiJIUzI1NiIsIn...",
+#   "refresh": "eyJhbGciOiJIUzI1NiIsIn...",
+#   "user": {
+#     "id": "e4f8d9b2-...",
+#     "email": "manager_test@petcare.com",
+#     "first_name": "Admin",
+#     "last_name": "Gerente",
+#     "groups": ["manager"]
+#   }
+# }
+
+
+###
+# @name 2_GetDashboardSummaryPeriod
+# 2. Get Dashboard Summary (Predefined Period)
+# Returns aggregate KPIs and chart data points for 'este_mes', 'esta_semana', or 'hoy'.
 GET {{baseUrl}}/api/v1/reporting/dashboard/?periodo=este_mes
 Authorization: Bearer {{token}}
 Accept: application/json
 
-### Response Esperada (200 OK):
+### Expected Response (200 OK):
 # {
 #   "period": "este_mes",
-#   "start_date": "2026-06-01",
-#   "end_date": "2026-06-02",
+#   "from": "2026-06-01",
+#   "to": "2026-06-02",
 #   "has_data": true,
 #   "kpis": [
 #     {
@@ -22,34 +52,7 @@ Accept: application/json
 #       "icon": "layout-dashboard",
 #       "status": "success"
 #     },
-#     {
-#       "id": "stock",
-#       "title": "Desabastecimiento",
-#       "value": "1",
-#       "icon": "clipboard-list",
-#       "status": "danger"
-#     },
-#     {
-#       "id": "ingresos",
-#       "title": "Consultas Realizadas",
-#       "value": "1",
-#       "icon": "clipboard-check",
-#       "status": "success"
-#     },
-#     {
-#       "id": "consumo",
-#       "title": "Consumo Inventario",
-#       "value": "15",
-#       "icon": "syringe",
-#       "status": "info"
-#     },
-#     {
-#       "id": "citas",
-#       "title": "Efectividad Citas",
-#       "value": "50%",
-#       "icon": "calendar-days",
-#       "status": "success"
-#     }
+#     ...
 #   ],
 #   "revenueData": [
 #     { "label": "2026-06-01", "amount": 450.0 }
@@ -58,19 +61,38 @@ Accept: application/json
 
 
 ###
-# @name 3_GetKPIsOnly
-# 3. Lista de Indicadores Clave de Desempeño (KPIs)
-# Devuelve de forma exclusiva la colección formateada de los 5 KPIs operacionales.
-GET {{baseUrl}}/api/v1/reporting/kpis/?periodo=esta_semana
+# @name 3_GetDashboardSummaryCustomDates
+# 3. Get Dashboard Summary (Custom Date Range - English 'from' & 'to')
+# Returns aggregate KPIs and chart data points for specific, exact dates.
+GET {{baseUrl}}/api/v1/reporting/dashboard/?from=2026-05-15&to=2026-06-02
 Authorization: Bearer {{token}}
 Accept: application/json
 
-### Response Esperada (200 OK):
+### Expected Response (200 OK):
+# {
+#   "period": "este_mes",
+#   "from": "2026-05-15",
+#   "to": "2026-06-02",
+#   "has_data": true,
+#   "kpis": [...],
+#   "revenueData": [...]
+# }
+
+
+###
+# @name 4_GetKPIsOnly
+# 4. Get KPIs list (Custom Date Range - English 'from' & 'to')
+# Returns only the list of the 5 operational KPIs.
+GET {{baseUrl}}/api/v1/reporting/kpis/?from=2026-05-15&to=2026-06-02
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Expected Response (200 OK):
 # [
 #   {
 #     "id": "brecha",
 #     "title": "Presupuesto de Compras",
-#     "value": "$0.00",
+#     "value": "$450.00",
 #     "icon": "layout-dashboard",
 #     "status": "success"
 #   },
@@ -79,54 +101,54 @@ Accept: application/json
 
 
 ###
-# @name 4_GetRevenueData
-# 4. Puntos de Gráfico de Compras / Ingresos
-# Devuelve montos agrupados para la gráfica del dashboard según temporalidad.
-GET {{baseUrl}}/api/v1/reporting/revenue/?periodo=hoy
+# @name 5_GetRevenueData
+# 5. Get Revenue Chart Data (Custom Date Range - English 'from' & 'to')
+# Returns only the grouped data points for the dashboard chart.
+GET {{baseUrl}}/api/v1/reporting/revenue/?from=2026-05-15&to=2026-06-02
 Authorization: Bearer {{token}}
 Accept: application/json
 
-### Response Esperada (200 OK):
+### Expected Response (200 OK):
 # [
-#   { "label": "2026-06-02", "amount": 0.0 }
+#   { "label": "2026-06-01", "amount": 450.0 }
 # ]
 
 
 ###
-# @name 5_ExportReportCSV
-# 5. Generar y Exportar Reporte de Desempeño (Formato CSV)
-# Retorna un flujo binario para descarga directa con cabeceras de metadatos, KPIs, consultas y compras.
-GET {{baseUrl}}/api/v1/reporting/export/?periodo=este_mes&export_format=csv
+# @name 6_ExportReportCSV
+# 6. Generate and Export Detailed Report (CSV Format)
+# Triggers download of the report in CSV format for a custom range.
+GET {{baseUrl}}/api/v1/reporting/export/?from=2026-05-15&to=2026-06-02&export_format=csv
 Authorization: Bearer {{token}}
 
-### Response Esperada (200 OK + Descarga Directa):
+### Expected Response (200 OK + Attachment Download):
 # Content-Type: text/csv; charset=utf-8-sig
-# Content-Disposition: attachment; filename="reporte_desempeno_este_mes_2026-06-01_al_2026-06-02.csv"
+# Content-Disposition: attachment; filename="reporte_desempeno_este_mes_2026-05-15_al_2026-06-02.csv"
 #
 # ==================================================
 # REPORTE DE DESEMPEÑO Y RENDIMIENTO - CLINICA PETCARE
 # ==================================================
-# Periodo del Reporte:,2026-06-01 al 2026-06-02 (ESTE_MES)
+# Periodo del Reporte:,2026-05-15 al 2026-06-02 (ESTE_MES)
 # Fecha de Generación:,2026-06-02 14:39:47
 # ...
 
 
 ###
-# @name 6_ExportReportJSON
-# 6. Generar y Exportar Reporte de Desempeño (Formato JSON)
-# Genera un archivo estructurado JSON descargable con todo el desglose crudo de la base de datos.
-GET {{baseUrl}}/api/v1/reporting/export/?periodo=este_mes&export_format=json
+# @name 7_ExportReportJSON
+# 7. Generate and Export Detailed Report (JSON Format)
+# Triggers download of the report in JSON format for a custom range.
+GET {{baseUrl}}/api/v1/reporting/export/?from=2026-05-15&to=2026-06-02&export_format=json
 Authorization: Bearer {{token}}
 
-### Response Esperada (200 OK + Descarga Directa):
+### Expected Response (200 OK + Attachment Download):
 # Content-Type: application/json; charset=utf-8
-# Content-Disposition: attachment; filename="reporte_desempeno_este_mes_2026-06-01_al_2026-06-02.json"
+# Content-Disposition: attachment; filename="reporte_desempeno_este_mes_2026-05-15_al_2026-06-02.json"
 #
 # {
 #   "report_metadata": {
 #     "period": "este_mes",
-#     "start_date": "2026-06-01",
-#     "end_date": "2026-06-02",
+#     "from": "2026-05-15",
+#     "to": "2026-06-02",
 #     "generated_at": "2026-06-02 14:39:47"
 #   },
 #   "kpis": [...],

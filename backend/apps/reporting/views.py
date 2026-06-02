@@ -22,11 +22,11 @@ class DashboardSummaryView(APIView):
 
     def get(self, request):
         periodo = request.query_params.get('periodo', 'este_mes')
-        start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
+        from_date_str = request.query_params.get('from')
+        to_date_str = request.query_params.get('to')
 
         try:
-            start, end = get_date_range(periodo, start_date_str, end_date_str)
+            start, end = get_date_range(periodo, from_date_str, to_date_str)
         except ValueError as e:
             return Response(
                 {"error": f"Formato de fecha inválido. Use YYYY-MM-DD: {str(e)}"},
@@ -50,8 +50,8 @@ class DashboardSummaryView(APIView):
 
         return Response({
             "period": periodo,
-            "start_date": str(start),
-            "end_date": str(end),
+            "from": str(start),
+            "to": str(end),
             "has_data": has_data,
             "kpis": kpis,
             "revenueData": revenue_data
@@ -67,11 +67,11 @@ class KPIListView(APIView):
 
     def get(self, request):
         periodo = request.query_params.get('periodo', 'este_mes')
-        start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
+        from_date_str = request.query_params.get('from')
+        to_date_str = request.query_params.get('to')
 
         try:
-            start, end = get_date_range(periodo, start_date_str, end_date_str)
+            start, end = get_date_range(periodo, from_date_str, to_date_str)
         except ValueError as e:
             return Response(
                 {"error": f"Formato de fecha inválido. Use YYYY-MM-DD: {str(e)}"},
@@ -91,11 +91,11 @@ class RevenueChartView(APIView):
 
     def get(self, request):
         periodo = request.query_params.get('periodo', 'este_mes')
-        start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
+        from_date_str = request.query_params.get('from')
+        to_date_str = request.query_params.get('to')
 
         try:
-            start, end = get_date_range(periodo, start_date_str, end_date_str)
+            start, end = get_date_range(periodo, from_date_str, to_date_str)
         except ValueError as e:
             return Response(
                 {"error": f"Formato de fecha inválido. Use YYYY-MM-DD: {str(e)}"},
@@ -116,12 +116,12 @@ class ExportReportView(APIView):
 
     def get(self, request):
         periodo = request.query_params.get('periodo', 'este_mes')
-        start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
+        from_date_str = request.query_params.get('from')
+        to_date_str = request.query_params.get('to')
         export_format = request.query_params.get('export_format', 'csv').lower()
 
         try:
-            start, end = get_date_range(periodo, start_date_str, end_date_str)
+            start, end = get_date_range(periodo, from_date_str, to_date_str)
         except ValueError as e:
             return HttpResponse(
                 f"Error: Formato de fecha inválido: {str(e)}", 
@@ -233,8 +233,8 @@ class ExportReportView(APIView):
             data = {
                 "report_metadata": {
                     "period": periodo,
-                    "start_date": str(start),
-                    "end_date": str(end),
+                    "from": str(start),
+                    "to": str(end),
                     "generated_at": str(timezone.now())
                 },
                 "kpis": kpis,

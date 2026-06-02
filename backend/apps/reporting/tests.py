@@ -248,3 +248,23 @@ class ReportingTestCase(APITestCase):
         self.assertEqual(len(data['purchase_orders']), 1)
         self.assertEqual(data['appointments'][0]['patient_name'], 'Firu')
         self.assertEqual(data['purchase_orders'][0]['supplier_name'], 'Droguería Central')
+
+    def test_custom_date_range(self):
+        """Verify custom date ranges via 'from' and 'to' query parameters work correctly."""
+        self.client.force_authenticate(user=self.manager_user)
+        
+        # Format today and tomorrow dates in YYYY-MM-DD
+        from_str = str(self.today)
+        to_str = str(self.today + timedelta(days=1))
+        
+        response = self.client.get('/api/v1/reporting/dashboard/', {
+            'from': from_str,
+            'to': to_str
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        data = response.data
+        self.assertEqual(data['from'], from_str)
+        self.assertEqual(data['to'], to_str)
+        self.assertTrue(data['has_data'])
+
