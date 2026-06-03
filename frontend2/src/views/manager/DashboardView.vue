@@ -2,24 +2,84 @@
   <div class="dashboard-container">
     <PageHeader title="Tablero Gerencial" subtitle="Situación operativa y táctica de la clínica" />
 
-    <div class="filter-bar">
-      <select
-        @change="(e) => dashboardStore.fetchDashboardData(e.target.value)"
-        class="gerencia-select"
-      >
-        <option value="este_mes">Período: Este Mes</option>
-        <option value="esta_semana">Período: Esta Semana</option>
-        <option value="hoy">Período: Hoy</option>
-      </select>
+    <!-- Control Toolbar: Period Filters and Report Exports -->
+    <div class="toolbar-card card">
+      <div class="filter-group">
+        <div class="field select-wrapper">
+          <label for="filtro-periodo" class="field__label">Período de Análisis</label>
+          <select
+            id="filtro-periodo"
+            v-model="periodo"
+            @change="onPeriodoChange"
+            class="select period-select"
+          >
+            <option value="este_mes">Este Mes</option>
+            <option value="esta_semana">Esta Semana</option>
+            <option value="hoy">Hoy</option>
+            <option value="personalizado">Rango Personalizado</option>
+          </select>
+        </div>
+
+        <transition name="fade">
+          <div v-if="periodo === 'personalizado'" class="custom-range-inputs">
+            <div class="field">
+              <label for="fecha-desde" class="field__label">Desde</label>
+              <input
+                id="fecha-desde"
+                type="date"
+                v-model="fechaDesde"
+                class="input date-input"
+              />
+            </div>
+            <div class="field">
+              <label for="fecha-hasta" class="field__label">Hasta</label>
+              <input
+                id="fecha-hasta"
+                type="date"
+                v-model="fechaHasta"
+                class="input date-input"
+              />
+            </div>
+            <button @click="aplicarRangoPersonalizado" class="btn btn--primary apply-btn">
+              Consultar
+            </button>
+          </div>
+        </transition>
+      </div>
+
+      <div class="export-actions">
+        <span class="export-label">Reportes del Período</span>
+        <div class="btn-group">
+          <button 
+            @click="exportarReporte('csv')" 
+            :disabled="isExportingCsv"
+            class="btn btn--ghost export-btn"
+          >
+            <AppIcon v-if="!isExportingCsv" name="download" :size="16" />
+            <span v-else class="loader-spinner"></span>
+            Exportar CSV
+          </button>
+          <button 
+            @click="exportarReporte('json')" 
+            :disabled="isExportingJson"
+            class="btn btn--ghost export-btn"
+          >
+            <AppIcon v-if="!isExportingJson" name="download" :size="16" />
+            <span v-else class="loader-spinner"></span>
+            Exportar JSON
+          </button>
+        </div>
+      </div>
     </div>
 
+    <!-- Main Content Area -->
     <div v-if="dashboardStore.isLoading" class="kpi-grid">
       <KpiCardSkeleton v-for="i in 5" :key="i" />
     </div>
 
     <div v-else-if="!dashboardStore.hasData" class="empty-state">
-      <div class="text-gray-400 mb-2">
-        <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="empty-state-icon">
+        <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 64px; height: 64px; opacity: 0.5;">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -28,11 +88,11 @@
           />
         </svg>
       </div>
-      <h3 class="text-lg font-medium text-gray-900">Aún no hay actividad registrada</h3>
-      <p class="text-sm text-gray-500 mt-1">Intenta seleccionando un rango de fechas diferente.</p>
+      <h3 class="empty-state-title">Aún no hay actividad registrada</h3>
+      <p class="empty-state-text">Intenta seleccionando un rango de fechas diferente.</p>
     </div>
 
-    <div v-else>
+    <div v-else class="stack">
       <div class="kpi-grid">
         <StatCard
           v-for="kpi in dashboardStore.kpis"
@@ -40,7 +100,7 @@
           :label="kpi.title"
           :value="kpi.value"
           :icon="kpi.icon"
-          :toneClass="kpi.status === 'danger' ? 'chip--danger' : 'chip--brand'"
+          :toneClass="getToneClass(kpi.status)"
         />
       </div>
 
@@ -50,58 +110,154 @@
 </template>
 
 <script setup>
-  import { onMounted } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { useDashboardStore } from '@/stores/useDashboardStore';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatCard from '@/components/shared/StatCard.vue';
+  import AppIcon from '@/components/shared/AppIcon.vue';
   import KpiCardSkeleton from '@/components/dashboard/KpiCardSkeleton.vue';
   import RevenueChart from '@/components/dashboard/RevenueChart.vue';
+
   const dashboardStore = useDashboardStore();
 
+  const periodo = ref('este_mes');
+  const fechaDesde = ref('');
+  const fechaHasta = ref('');
+
+  const isExportingCsv = ref(false);
+  const isExportingJson = ref(false);
+
   onMounted(() => {
-    dashboardStore.fetchDashboardData();
+    dashboardStore.fetchDashboardData(periodo.value);
   });
+
+  const onPeriodoChange = () => {
+    if (periodo.value !== 'personalizado') {
+      dashboardStore.fetchDashboardData(periodo.value);
+    }
+  };
+
+  const aplicarRangoPersonalizado = () => {
+    if (!fechaDesde.value || !fechaHasta.value) return;
+    dashboardStore.fetchDashboardData('personalizado', fechaDesde.value, fechaHasta.value);
+  };
+
+  const exportarReporte = async (formato) => {
+    if (formato === 'csv') isExportingCsv.value = true;
+    if (formato === 'json') isExportingJson.value = true;
+    
+    try {
+      const isCustom = periodo.value === 'personalizado';
+      await dashboardStore.exportReport(
+        formato,
+        periodo.value,
+        isCustom ? fechaDesde.value : null,
+        isCustom ? fechaHasta.value : null
+      );
+    } catch (err) {
+      console.error('Error exporting report:', err);
+    } finally {
+      if (formato === 'csv') isExportingCsv.value = false;
+      if (formato === 'json') isExportingJson.value = false;
+    }
+  };
+
+  const getToneClass = (status) => {
+    if (status === 'danger') return 'chip--danger';
+    if (status === 'warning') return 'chip--warning';
+    if (status === 'success') return 'chip--success';
+    if (status === 'info') return 'chip--sage';
+    return 'chip--brand';
+  };
 </script>
 
 <style scoped>
   .dashboard-container {
     padding: 1.5rem;
-  }
-
-  .filter-bar {
     display: flex;
-    justify-content: flex-start;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
-  .gerencia-select {
-    appearance: none;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    padding: 0.5rem 2.5rem 0.5rem 1rem;
+  .toolbar-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .select-wrapper {
+    min-width: 200px;
+  }
+
+  .custom-range-inputs {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    animation: slideIn 0.25s ease-out;
+  }
+
+  .date-input {
+    padding: 0.5rem 0.8rem;
+    border-radius: 12px;
+    border: 1px solid rgba(194, 167, 105, 0.2);
+    min-width: 140px;
     font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
-    cursor: pointer;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    outline: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 1rem;
   }
 
-  .gerencia-select:focus {
-    border-color: #7aa250;
-    box-shadow: 0 0 0 2px rgba(122, 162, 80, 0.2);
+  .apply-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.875rem;
+    border-radius: 999px;
+  }
+
+  .export-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .export-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    color: rgba(61, 61, 61, 0.52);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.875rem;
+    border-radius: 999px;
   }
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .empty-state {
@@ -111,5 +267,76 @@
     justify-content: center;
     padding: 4rem 0;
     text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .empty-state-title {
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .empty-state-text {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: rgba(61, 61, 61, 0.6);
+  }
+
+  /* Spinner Loader for Export Buttons */
+  .loader-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--brand-strong);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Fade transition for Vue */
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  @media (max-width: 768px) {
+    .toolbar-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .custom-range-inputs {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    .export-actions {
+      align-items: stretch;
+    }
+    .btn-group {
+      flex-direction: column;
+    }
   }
 </style>
