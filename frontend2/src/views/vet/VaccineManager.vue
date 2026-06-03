@@ -174,3 +174,26 @@
     </section>
   </div>
 </template>
+
+<style scoped>
+  .select,
+  .input,
+  .textarea {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .stack > * {
+    min-width: 0;
+  }
+
+  .split > * {
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    .card {
+      padding: 16px !important;
+    }
+  }
+</style>
