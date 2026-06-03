@@ -73,8 +73,17 @@
     </div>
 
     <!-- Main Content Area -->
-    <div v-if="dashboardStore.isLoading" class="kpi-grid">
-      <KpiCardSkeleton v-for="i in 5" :key="i" />
+    <div v-if="dashboardStore.isLoading" class="stack">
+      <div class="loading-banner card">
+        <span class="spinner-large"></span>
+        <div class="loading-text">
+          <h3>Cargando información del tablero...</h3>
+          <p>Por favor espera un momento mientras calculamos las estadísticas en tiempo real.</p>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <KpiCardSkeleton v-for="i in 5" :key="i" />
+      </div>
     </div>
 
     <div v-else-if="!dashboardStore.hasData" class="empty-state">
@@ -320,6 +329,46 @@
   .fade-leave-to {
     opacity: 0;
     transform: translateX(-10px);
+  }
+
+  /* Loading state styles */
+  .loading-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .spinner-large {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border: 3.5px solid rgba(194, 167, 105, 0.15);
+    border-top-color: var(--brand-strong);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  .loading-text p {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: rgba(61, 61, 61, 0.6);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   @media (max-width: 768px) {
