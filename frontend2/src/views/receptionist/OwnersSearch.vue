@@ -342,6 +342,7 @@
 
   .list__title,
   .list__subtitle {
+    overflow-wrap: anywhere;
     word-break: break-word;
   }
 
@@ -351,6 +352,19 @@
     }
     .owner-summary-grid > div {
       grid-column: span 1 !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .list__item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .list__item > .chip,
+    .list__item > :deep(.status-badge) {
+      align-self: flex-start;
+      margin-top: 4px;
     }
   }
 </style>
