@@ -50,9 +50,9 @@ export const appTemplate = {
     ],
   },
   roleSwitcher: [
-    { key: 'owner', label: 'Propietario', userId: 'o1' },
+    { key: 'owner', label: 'Propietario', userId: 'f37630b6-e1be-47fc-97d5-e8cf2950c4cb' },
     { key: 'receptionist', label: 'Recepcionista', userId: '' },
-    { key: 'vet', label: 'Veterinario', userId: 'v1' },
+    { key: 'vet', label: 'Veterinario', userId: '1' },
     { key: 'technician', label: 'Técnico Veterinario', userId: '' },
     { key: 'manager', label: 'Gerente', userId: '' },
   ],

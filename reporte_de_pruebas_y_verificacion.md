@@ -58,7 +58,7 @@ A continuación, se listan los requisitos iniciales organizados por módulos, in
 | :--- | :--- | :---: | :--- |
 | **6.1** | Gestionar catálogo de insumos, costos y umbrales mínimos. | **[x] COMPLETADO** | Validado en test unitario (`BatchCreationTestCase` en `test_inventory.py`). Los medicamentos e insumos registran costos, SKUs y límites mínimos permitidos de stock activo. |
 | **6.3** | Consumo y reposición bajo regla FIFO (First In, First Out). | **[x] COMPLETADO** | Validado en test unitario (`ConsumeFIFOServiceTestCase`). El sistema consume el stock del lote físico con fecha de vencimiento más próxima antes de tocar lotes más nuevos. |
-| **6.6** | Monitorizar fechas de vencimiento y alertas críticas de stock. | **[x] COMPLETADO** | Validado en test unitario (`AlertsTestCase`). Se generan alertas visuales de severidad `critical` o `warning` para insumos que descienden de su umbral mínimo o que expiran en menos de 45 días. |
+| **6.6** | Monitorizar fechas de vencimiento y alertas críticas de stock. | **[x] COMPLETADO** | Validado en test unitario (`AlertsTestCase`). Se generan alertas visuales de severidad `critical` o `warning` para insumos que descienden de su min_stock mínimo o que expiran en menos de 45 días. |
 | **6.7** | Ciclo completo de solicitudes de compra (Purchase Orders). | **[x] COMPLETADO** | Validado mediante tests unitarios (`test_orders.py`) y E2E de Playwright (`roles.spec.js`). El técnico propone la compra (`REQUESTED`), el Gerente aprueba (`APPROVED`) o rechaza (`CANCELLED`) desde su bandeja unificada, y el técnico registra la recepción física ingresando el lote al inventario activo. |
 
 ---

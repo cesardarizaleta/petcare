@@ -107,7 +107,7 @@ def pet_medical_record(request, pet_id):
         {
             "id": e.id,
             "event_type": e.event_type,
-            "vaccine_name": e.event_type,
+            "vaccine_name": e.vaccine_name or e.event_type,
             "dose": e.dose,
             "applied_date": str(e.applied_date),
             "next_due_date": str(e.next_due_date) if e.next_due_date else None,
@@ -151,7 +151,7 @@ def pet_vaccination_schedule(request, pet_id):
     data = [
         {
             "id": e.id,
-            "vaccine_name": e.event_type,
+            "vaccine_name": e.vaccine_name or e.event_type,
             "applied_date": str(e.applied_date),
             "next_due_date": str(e.next_due_date) if e.next_due_date else None,
             "dose": e.dose,
@@ -186,17 +186,44 @@ def pet_vaccination_events(request, pet_id):
         defaults={"vet": None},
     )
 
-    applied_date = request.data.get("applied_date")
-    if not applied_date or applied_date == "":
+    from datetime import datetime
+    applied_date_str = request.data.get("applied_date")
+    if applied_date_str and applied_date_str != "":
+        try:
+            if isinstance(applied_date_str, str):
+                applied_date = datetime.strptime(applied_date_str, "%Y-%m-%d").date()
+            else:
+                applied_date = applied_date_str
+        except ValueError:
+            return Response({"error": "Formato de fecha de aplicación inválido."}, status=status.HTTP_400_BAD_REQUEST)
+    else:
         applied_date = timezone.now().date()
 
-    next_due_date = request.data.get("next_due_date")
-    if not next_due_date or next_due_date == "":
+    # Validar que la fecha de aplicación no sea en el futuro
+    today = timezone.localtime(timezone.now()).date()
+    if applied_date > today:
+        return Response({"error": "La fecha de aplicación no puede ser una fecha futura."}, status=status.HTTP_400_BAD_REQUEST)
+
+    next_due_date_str = request.data.get("next_due_date")
+    if next_due_date_str and next_due_date_str != "":
+        try:
+            if isinstance(next_due_date_str, str):
+                next_due_date = datetime.strptime(next_due_date_str, "%Y-%m-%d").date()
+            else:
+                next_due_date = next_due_date_str
+        except ValueError:
+            return Response({"error": "Formato de fecha de vencimiento/siguiente inválido."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validar que la fecha de vencimiento sea posterior a la de aplicación
+        if next_due_date <= applied_date:
+            return Response({"error": "La próxima fecha debe ser posterior a la fecha de aplicación."}, status=status.HTTP_400_BAD_REQUEST)
+    else:
         next_due_date = None
 
     event = VaccinationDewormingEvent.objects.create(
         plan=plan,
         event_type=request.data.get("event_type", "VACCINE"),
+        vaccine_name=request.data.get("vaccine_name", ""),
         dose=request.data.get("dose", ""),
         applied_date=applied_date,
         sanitary_batch=request.data.get("sanitary_batch", ""),
@@ -207,7 +234,7 @@ def pet_vaccination_events(request, pet_id):
         {
             "id": event.id,
             "event_type": event.event_type,
-            "vaccine_name": request.data.get("vaccine_name", event.event_type),
+            "vaccine_name": event.vaccine_name or event.event_type,
             "dose": event.dose,
             "applied_date": str(event.applied_date),
             "next_due_date": str(event.next_due_date) if event.next_due_date else None,

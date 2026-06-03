@@ -15,7 +15,7 @@ const CATEGORY_OPTIONS = [
 const EMPTY_FORM = {
   nombre: '',
   categoria: '',
-  umbral: '',
+  min_stock: '',
   stock_inicial: 0,
   observaciones: '',
 };
@@ -31,7 +31,7 @@ const resetForm = () => {
 };
 
 async function handleSubmit() {
-  if (form.value.umbral === '' || form.value.umbral === null || Number(form.value.umbral) < 1) {
+  if (form.value.min_stock === '' || form.value.min_stock === null || Number(form.value.min_stock) < 1) {
     toastStore.push({
       title: 'Error de validación',
       description: 'El nivel mínimo de existencias (stock mínimo) debe ser mayor o igual a 1.',
@@ -55,7 +55,7 @@ async function handleSubmit() {
       name: form.value.nombre,
       category: form.value.categoria,
       description: form.value.observaciones || '',
-      min_stock: Number(form.value.umbral),
+      min_stock: Number(form.value.min_stock),
       initial_stock: Number(form.value.stock_inicial) || 0,
     });
 
@@ -105,11 +105,11 @@ async function handleSubmit() {
           </select>
         </div>
         <div class="field">
-          <label for="umbral">Nivel mínimo de existencias*</label>
+          <label for="min_stock">Nivel mínimo de existencias*</label>
           <input
             class="input"
-            id="umbral"
-            v-model="form.umbral"
+            id="min_stock"
+            v-model="form.min_stock"
             type="number"
             min="1"
             required

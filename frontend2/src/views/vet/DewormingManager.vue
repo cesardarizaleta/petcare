@@ -13,8 +13,9 @@
   onMounted(async () => {
     try {
       await appStore.fetchAppointmentsToday();
+      await appStore.fetchPets();
     } catch (err) {
-      console.error('Error fetching today appointments in DewormingManager:', err);
+      console.error('Error fetching today appointments/pets in DewormingManager:', err);
     }
   });
 
@@ -46,6 +47,25 @@
 
     if (form.weight !== '' && form.weight !== null && Number(form.weight) < 0) {
       toastStore.push({ title: 'Error de validación', description: 'El peso no puede ser negativo.', type: 'error' });
+      return;
+    }
+
+    const todayStr = todayISO();
+    if (form.date > todayStr) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'La fecha de aplicación no puede ser una fecha futura.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (form.nextDate && form.nextDate <= form.date) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'La próxima fecha debe ser posterior a la fecha de aplicación.',
+        type: 'error',
+      });
       return;
     }
 
@@ -91,17 +111,12 @@
         <div class="input-row">
           <label class="field">
             <span>Seleccionar Paciente (mascota) *</span>
-            <div class="input-grid">
-              <select v-model="form.petId" class="select" @change="loadHistory">
-                <option value="" disabled>Seleccione un paciente...</option>
-                <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
-                  {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }})
-                </option>
-              </select>
-              <button class="btn btn--soft" type="button" @click="loadHistory">
-                Cargar historial
-              </button>
-            </div>
+            <select v-model="form.petId" class="select" @change="loadHistory">
+              <option value="" disabled>Seleccione un paciente...</option>
+              <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
+                {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
+              </option>
+            </select>
           </label>
           <label class="field"
             ><span>Producto *</span

@@ -72,6 +72,13 @@ class OwnerUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("La cédula/DNI debe contener entre 6 y 10 dígitos positivos.")
         return value
 
+    def validate_phone(self, value):
+        if value:
+            import re
+            if not re.match(r'^\+?[\d\s\-()]{7,20}$', value):
+                raise serializers.ValidationError("El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).")
+        return value
+
     class Meta:
         model = Owner
         fields = ('first_name', 'last_name', 'phone', 'address', 'dni')

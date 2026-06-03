@@ -87,6 +87,25 @@
       toastStore.push({ title: 'El nombre es obligatorio.', type: 'error' });
       return;
     }
+
+    if (editForm.dni && !/^[0-9]{6,10}$/.test(editForm.dni)) {
+      toastStore.push({
+        title: 'Cédula / DNI inválido',
+        description: 'La cédula debe contener entre 6 y 10 dígitos numéricos positivos.',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (editForm.phone && !/^\+?[\d\s\-()]{7,20}$/.test(editForm.phone)) {
+      toastStore.push({
+        title: 'Teléfono inválido',
+        description: 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).',
+        type: 'error'
+      });
+      return;
+    }
+
     saving.value = true;
     try {
       await appStore.updateOwnerById(selectedOwner.value.id, editForm);

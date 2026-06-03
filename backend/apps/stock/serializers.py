@@ -53,7 +53,7 @@ class SupplyReadSerializer(serializers.ModelSerializer):
     """Read serializer that includes computed stock from active batches."""
     quantity = serializers.SerializerMethodField()
     unitCost = serializers.SerializerMethodField()
-    min_stock = serializers.IntegerField(source='min_stock')
+    min_stock = serializers.IntegerField()
     type = serializers.CharField(source='get_category_display')
     batches = serializers.SerializerMethodField()
 

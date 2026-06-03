@@ -91,7 +91,7 @@
           <select v-model="petIdInput" class="select" required>
             <option value="" disabled>Seleccione un paciente...</option>
             <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
-              {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }})
+              {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
             </option>
           </select>
         </label>

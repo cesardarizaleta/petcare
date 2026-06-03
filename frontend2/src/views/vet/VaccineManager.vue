@@ -52,6 +52,25 @@
       }
     }
 
+    const todayStr = todayISO();
+    if (form.date > todayStr) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'La fecha de aplicación no puede ser una fecha futura.',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (form.nextDate && form.nextDate <= form.date) {
+      toastStore.push({
+        title: 'Fecha inválida',
+        description: 'La próxima fecha debe ser posterior a la fecha de aplicación.',
+        type: 'error',
+      });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.registerVaccinationEvent(form.petId, {
@@ -96,17 +115,12 @@
         <div class="input-row">
           <label class="field">
             <span>Seleccionar Paciente (mascota) *</span>
-            <div class="input-grid">
-              <select v-model="form.petId" class="select" @change="loadVaccineHistory">
-                <option value="" disabled>Seleccione un paciente...</option>
-                <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
-                  {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }})
-                </option>
-              </select>
-              <button class="btn btn--soft" type="button" @click="loadVaccineHistory">
-                Cargar historial
-              </button>
-            </div>
+            <select v-model="form.petId" class="select" @change="loadVaccineHistory">
+              <option value="" disabled>Seleccione un paciente...</option>
+              <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
+                {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
+              </option>
+            </select>
           </label>
           <div class="input-grid">
             <label class="field"

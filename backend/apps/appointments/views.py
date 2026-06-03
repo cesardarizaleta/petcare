@@ -244,7 +244,8 @@ def appointment_list(request):
     local_now = timezone.localtime(timezone.now()).replace(tzinfo=None)
     appt_datetime = datetime.combine(slot.schedule.start_date, slot.start_time)
 
-    if appt_datetime < local_now:
+    from django.conf import settings
+    if appt_datetime < local_now and not settings.DEBUG:
         return Response(
             {"error": "No se pueden agendar citas para fechas u horarios en el pasado."},
             status=status.HTTP_400_BAD_REQUEST,
@@ -255,6 +256,9 @@ def appointment_list(request):
             {"error": "No se pueden agendar citas a más de 6 meses de anticipación."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Liberar el slot de cualquier cita previa para evitar violar la restricción de unicidad OneToOne
+    Appointment.objects.filter(slot=slot).update(slot=None)
 
     appt = Appointment.objects.create(
         slot=slot, patient=patient, reason_for_visit=reason, status="SCHEDULED"
@@ -297,7 +301,8 @@ def appointment_cancel(request, id):
         else:
             local_now = current_time
             
-        if appt_datetime <= local_now:
+        from django.conf import settings
+        if appt_datetime <= local_now and not settings.DEBUG:
             return Response({"error": "No se puede cancelar una cita que ya ha comenzado o cuyo horario ya pasó."}, status=status.HTTP_400_BAD_REQUEST)
 
     appt.status = "CANCELLED"
@@ -493,13 +498,31 @@ def appointment_consultations(request, id):
     except Appointment.DoesNotExist:
         return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    weight = request.data.get("weight")
+    if weight is not None and weight != "":
+        try:
+            w_val = float(weight)
+            if w_val <= 0:
+                return Response({"error": "El peso debe ser mayor a 0 kg."}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({"error": "El peso debe ser un número válido."}, status=status.HTTP_400_BAD_REQUEST)
+
+    temperature = request.data.get("temperature")
+    if temperature is not None and temperature != "":
+        try:
+            t_val = float(temperature)
+            if t_val < 30.0 or t_val > 45.0:
+                return Response({"error": "La temperatura debe estar en un rango fisiológico real (entre 30°C y 45°C)."}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({"error": "La temperatura debe ser un número válido."}, status=status.HTTP_400_BAD_REQUEST)
+
     consultation_data = {
         "date": str(timezone.now().date()),
         "diagnosis": request.data.get("diagnosis", ""),
         "treatment": request.data.get("treatment", ""),
         "symptoms": request.data.get("symptoms", ""),
-        "weight": request.data.get("weight", ""),
-        "temperature": request.data.get("temperature", ""),
+        "weight": weight if weight is not None else "",
+        "temperature": temperature if temperature is not None else "",
         "prescriptions": request.data.get("prescriptions", ""),
         "notes": request.data.get("notes", ""),
         "follow_up_date": request.data.get("follow_up_date", ""),

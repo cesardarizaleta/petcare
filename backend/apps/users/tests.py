@@ -65,6 +65,21 @@ class UsersAuthTestCase(APITestCase):
         self.assertTrue(NaturalPerson.objects.filter(user=user).exists())
         self.assertTrue(Owner.objects.filter(user=user).exists())
 
+    def test_registration_invalid_phone(self):
+        payload = {
+            'email': 'invalid_phone@test.com',
+            'password': 'SecurePassword123!',
+            'first_name': 'Carlos',
+            'last_name': 'Mendoza',
+            'phone': 'DFHSJD',
+            'address': 'Av. Libertador 1420',
+            'dni': '35123456'
+        }
+        response = self.client.post('/api/v1/auth/register/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('El teléfono debe tener un formato válido', response.data['error'])
+
     def test_registration_missing_fields(self):
         payload = {
             'email': 'incomplete@test.com',

@@ -41,11 +41,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 import sys
 
-if 'test' in sys.argv:
+import os
+
+if 'test' in sys.argv or os.environ.get('USE_SQLITE') == 'True':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db_test.sqlite3',
+            'NAME': BASE_DIR / ('db_test.sqlite3' if 'test' in sys.argv else 'db.sqlite3'),
         }
     }
 else:

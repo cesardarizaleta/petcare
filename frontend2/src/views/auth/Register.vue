@@ -34,6 +34,15 @@
       return;
     }
 
+    if (form.phone && !/^\+?[\d\s\-()]{7,20}$/.test(form.phone)) {
+      toastStore.push({
+        title: 'Teléfono inválido',
+        description: 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).',
+        type: 'error'
+      });
+      return;
+    }
+
     loading.value = true;
     try {
       await appStore.register(form);

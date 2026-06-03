@@ -44,6 +44,12 @@ def register(request):
         if not re.match(r'^\d{6,10}$', str(dni)):
             return Response({'error': 'La cédula/DNI debe contener entre 6 y 10 dígitos positivos.'}, status=status.HTTP_400_BAD_REQUEST)
         
+    phone = data.get('phone')
+    if phone:
+        import re
+        if not re.match(r'^\+?[\d\s\-()]{7,20}$', str(phone)):
+            return Response({'error': 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).'}, status=status.HTTP_400_BAD_REQUEST)
+
     if User.objects.filter(email=email).exists():
         return Response({'email': ['Este correo electrónico ya está registrado.']}, status=status.HTTP_400_BAD_REQUEST)
         

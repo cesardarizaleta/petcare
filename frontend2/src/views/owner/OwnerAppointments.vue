@@ -4,7 +4,7 @@
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { formatDate, getOwnerAppointments, getPet, getVet } from '@/lib/petcare';
+  import { formatDate, getOwnerAppointments, getPet } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -120,7 +120,7 @@
             <td>{{ formatDate(appointment.date) }} · {{ appointment.time }}</td>
             <td>{{ getPet(appStore.pets, appointment.petId)?.name }}</td>
             <td>{{ appointment.reason }}</td>
-            <td>{{ getVet(appStore.vets, appointment.vetId)?.name }}</td>
+            <td>{{ appointment.vetName || 'Veterinario' }}</td>
             <td><StatusBadge :status="appointment.status" /></td>
             <td>
               <button

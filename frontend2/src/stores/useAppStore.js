@@ -380,24 +380,32 @@ export const useAppStore = defineStore('app', {
 
     async confirmAppointment(id) {
       await http.post(`/api/v1/appointments/${id}/confirm/`);
-      await this.fetchAppointmentsToday();
+      this.appointments = this.appointments.map(appt =>
+        appt.id === id ? { ...appt, status: 'confirmed' } : appt
+      );
     },
 
     async cancelAppointment(id) {
       await http.post(`/api/v1/appointments/${id}/cancel/`);
-      await this.fetchAppointmentsToday();
+      this.appointments = this.appointments.map(appt =>
+        appt.id === id ? { ...appt, status: 'cancelled' } : appt
+      );
     },
 
     async checkInAppointment(id, priority = 'MEDIUM') {
       await http.post(`/api/v1/appointments/${id}/check-in/`, { priority_level: priority });
-      await this.fetchAppointmentsToday();
+      this.appointments = this.appointments.map(appt =>
+        appt.id === id ? { ...appt, status: 'checked_in' } : appt
+      );
       await this.fetchWaitingList();
     },
 
     async saveConsultation(appointmentId, consultationData) {
       const res = await http.post(`/api/v1/appointments/${appointmentId}/consultations/`, consultationData);
       this.consultations.push(res.data);
-      await this.fetchAppointmentsToday();
+      this.appointments = this.appointments.map(appt =>
+        appt.id === appointmentId ? { ...appt, status: 'completed' } : appt
+      );
       return res.data;
     },
 
@@ -442,8 +450,13 @@ export const useAppStore = defineStore('app', {
 
     async callNextPatient(waitingListId) {
       await http.post(`/api/v1/waiting-list/${waitingListId}/call-next/`);
+      const entry = this.waitingList.find(e => e.id === waitingListId);
+      if (entry && entry.appointmentId) {
+        this.appointments = this.appointments.map(appt =>
+          appt.id === entry.appointmentId ? { ...appt, status: 'completed' } : appt
+        );
+      }
       await this.fetchWaitingList();
-      await this.fetchAppointmentsToday();
     },
 
     // ==============================
@@ -499,7 +512,7 @@ export const useAppStore = defineStore('app', {
         const savedUmbral = localStorage.getItem(`inventory_umbral_${item.id}`);
         return {
           ...item,
-          umbral: savedUmbral !== null ? parseInt(savedUmbral, 10) : item.umbral,
+          min_stock: savedUmbral !== null ? parseInt(savedUmbral, 10) : item.min_stock,
         };
       });
       normalizeInventory(this.inventory);
@@ -514,7 +527,7 @@ export const useAppStore = defineStore('app', {
         name: supplyData.name,
         category: supplyData.category || 'CONSUMABLE',
         description: supplyData.description || '',
-        min_stock: supplyData.min_stock || supplyData.umbral || 10,
+        min_stock: supplyData.min_stock || supplyData.min_stock || 10,
         initial_stock: supplyData.initial_stock || 0,
       };
       const res = await http.post('/api/v1/inventory/supplies/', payload);

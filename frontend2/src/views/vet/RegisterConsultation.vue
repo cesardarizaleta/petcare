@@ -48,13 +48,19 @@
       return;
     }
 
-    if (form.weight !== '' && form.weight !== null && Number(form.weight) < 0) {
-      toastStore.push({ title: 'Error de validación', description: 'El peso no puede ser negativo.', type: 'error' });
-      return;
+    if (form.weight !== '' && form.weight !== null) {
+      const wVal = Number(form.weight);
+      if (isNaN(wVal) || wVal <= 0) {
+        toastStore.push({ title: 'Error de validación', description: 'El peso debe ser mayor a 0 kg.', type: 'error' });
+        return;
+      }
     }
-    if (form.temperature !== '' && form.temperature !== null && Number(form.temperature) < 0) {
-      toastStore.push({ title: 'Error de validación', description: 'La temperatura no puede ser negativa.', type: 'error' });
-      return;
+    if (form.temperature !== '' && form.temperature !== null) {
+      const tVal = Number(form.temperature);
+      if (isNaN(tVal) || tVal < 30.0 || tVal > 45.0) {
+        toastStore.push({ title: 'Error de validación', description: 'La temperatura debe estar en un rango fisiológico real (entre 30°C y 45°C).', type: 'error' });
+        return;
+      }
     }
 
     loading.value = true;
@@ -63,8 +69,8 @@
         diagnosis: form.diagnosis,
         treatment: form.treatment,
         symptoms: form.symptoms,
-        weight: Number(form.weight) || 0,
-        temperature: Number(form.temperature) || 0,
+        weight: form.weight !== '' && form.weight !== null ? Number(form.weight) : null,
+        temperature: form.temperature !== '' && form.temperature !== null ? Number(form.temperature) : null,
         prescriptions: form.prescriptions,
         notes: form.notes,
         follow_up_date: form.followUpDate || null,

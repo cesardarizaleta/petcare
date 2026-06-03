@@ -118,7 +118,7 @@
         id: `a${Date.now()}`,
         petId: form.petId,
         ownerId: appStore.currentUserId,
-        vetId: 'v1',
+        vetId: '1',
         date: form.date,
         time: form.time,
         reason: form.reason,
@@ -165,7 +165,7 @@
           <span>Selecciona la mascota</span>
           <select v-model="form.petId" class="select">
             <option v-for="pet in pets" :key="pet.id" :value="pet.id">
-              {{ pet.name }} · {{ pet.breed }}
+              {{ pet.name }} · {{ pet.breed }} ({{ pet.color }})
             </option>
           </select>
         </label>

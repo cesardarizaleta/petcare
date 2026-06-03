@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.utils import timezone
@@ -116,12 +116,43 @@ class PatientsTestCase(APITestCase):
         self.assertEqual(post_response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(post_response.data['event_type'], 'VACCINE')
         self.assertEqual(post_response.data['lot'], 'LOTE-VAC-999')
+        self.assertEqual(post_response.data['vaccine_name'], 'Quíntuple')
 
         # Verificar BD
-        self.assertTrue(VaccinationDewormingEvent.objects.filter(sanitary_batch='LOTE-VAC-999').exists())
+        event_obj = VaccinationDewormingEvent.objects.get(sanitary_batch='LOTE-VAC-999')
+        self.assertEqual(event_obj.vaccine_name, 'Quíntuple')
 
         # 2. Consultar Cronograma/Schedule
         get_response = self.client.get(f'/api/v1/pets/{self.patient.id}/vaccination-plan/schedule/')
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(get_response.data), 1)
         self.assertEqual(get_response.data[0]['lot'], 'LOTE-VAC-999')
+        self.assertEqual(get_response.data[0]['vaccine_name'], 'Quíntuple')
+
+    def test_vaccination_event_future_applied_date(self):
+        # Intentar registrar una vacuna aplicada en el futuro
+        tomorrow = (timezone.now() + timedelta(days=1)).date()
+        event_payload = {
+            'event_type': 'VACCINE',
+            'dose': '1ml',
+            'applied_date': str(tomorrow),
+            'vaccine_name': 'Quíntuple'
+        }
+        response = self.client.post(f'/api/v1/pets/{self.patient.id}/vaccination-events/', event_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('La fecha de aplicación no puede ser una fecha futura', response.data['error'])
+
+    def test_vaccination_event_past_next_due_date(self):
+        # Intentar registrar con una fecha de seguimiento anterior a la fecha de aplicación
+        event_payload = {
+            'event_type': 'VACCINE',
+            'dose': '1ml',
+            'applied_date': '2026-05-31',
+            'next_due_date': '2026-05-30',  # Siguiente fecha antes que la de aplicación
+            'vaccine_name': 'Quíntuple'
+        }
+        response = self.client.post(f'/api/v1/pets/{self.patient.id}/vaccination-events/', event_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('La próxima fecha debe ser posterior a la fecha de aplicación', response.data['error'])

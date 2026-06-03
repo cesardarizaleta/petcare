@@ -93,7 +93,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
       // KPI: Desabastecimiento de Insumos (Real de inventario)
       const insumosCriticos = appStore.inventory.filter(
-        (item) => item.quantity <= item.umbral
+        (item) => item.quantity <= item.min_stock
       ).length;
 
       // KPI: Consultas Realizadas

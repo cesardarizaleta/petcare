@@ -1,7 +1,7 @@
 export const DEFAULT_INVENTORY_UMBRAL = 10;
 
 export function getInventoryUmbral(item) {
-  const raw = item?.umbral;
+  const raw = item?.min_stock;
   if (raw != null && raw !== '' && !Number.isNaN(Number(raw))) {
     return Number(raw);
   }
@@ -12,7 +12,7 @@ export function normalizeInventoryItem(item) {
   if (!item.batches) {
     item.batches = [];
   }
-  item.umbral = getInventoryUmbral(item);
+  item.min_stock = getInventoryUmbral(item);
   return item;
 }
 

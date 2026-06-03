@@ -250,3 +250,27 @@ class ConsumeEndpointTestCase(TestCase):
         data = {"supply_id": str(self.supply.id), "quantity": 1}
         response = client.post('/api/v1/inventory/consume/', data, format='json')
         self.assertEqual(response.status_code, 401)
+
+
+class SupplyCreationTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='tech@petcare.com',
+            password='testpass123',
+            first_name='Tech',
+            last_name='User'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_supply_success(self):
+        data = {
+            "name": "Jeringa 5ml",
+            "category": "CONSUMABLE",
+            "description": "Jeringas descartables de 5ml",
+            "min_stock": 10,
+            "initial_stock": 30
+        }
+        response = self.client.post('/api/v1/inventory/supplies/', data, format='json')
+        self.assertEqual(response.status_code, 201)
+

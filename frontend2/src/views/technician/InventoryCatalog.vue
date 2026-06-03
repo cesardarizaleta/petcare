@@ -32,21 +32,21 @@ const alertByItemId = computed(() => {
 });
 
 function handleUmbralChange(item) {
-  if (item.umbral === undefined || item.umbral === null || item.umbral === '' || Number(item.umbral) < 1) {
+  if (item.min_stock === undefined || item.min_stock === null || item.min_stock === '' || Number(item.min_stock) < 1) {
     toastStore.push({
       title: 'Stock mínimo inválido',
       description: 'El stock mínimo no puede ser negativo o menor a 1. Se ha restablecido a 1.',
       type: 'error'
     });
-    item.umbral = 1;
+    item.min_stock = 1;
   } else {
     toastStore.push({
       title: 'Stock mínimo actualizado',
-      description: `El stock mínimo para ${item.name} se actualizó a ${item.umbral} unidades.`,
+      description: `El stock mínimo para ${item.name} se actualizó a ${item.min_stock} unidades.`,
       type: 'success'
     });
   }
-  localStorage.setItem(`inventory_umbral_${item.id}`, item.umbral);
+  localStorage.setItem(`inventory_umbral_${item.id}`, item.min_stock);
   appStore.normalizeInventory();
 }
 </script>
@@ -97,10 +97,10 @@ function handleUmbralChange(item) {
               <td>{{ item.quantity }} uds.</td>
               <td>
                 <input
-                  v-model.number="item.umbral"
+                  v-model.number="item.min_stock"
                   type="number"
                   min="1"
-                  class="input inventory-umbral-input"
+                  class="input inventory-min_stock-input"
                   title="Nivel mínimo de existencias"
                   @change="handleUmbralChange(item)"
                 />
@@ -127,7 +127,7 @@ function handleUmbralChange(item) {
   font-weight: 500;
 }
 
-.inventory-umbral-input {
+.inventory-min_stock-input {
   width: 4.5rem;
   padding: 6px 8px;
 }

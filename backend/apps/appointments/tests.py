@@ -206,3 +206,69 @@ class AppointmentsTestCase(APITestCase):
 
         appt.refresh_from_db()
         self.assertEqual(appt.status, 'COMPLETED')
+
+    def test_appointment_consultation_invalid_weight(self):
+        appt = Appointment.objects.create(
+            slot=self.slot,
+            patient=self.patient,
+            reason_for_visit='Vacunas',
+            status='SCHEDULED'
+        )
+        consult_payload = {
+            'diagnosis': 'Sano',
+            'treatment': 'Ninguno',
+            'weight': '0',
+            'temperature': '38.5'
+        }
+        response = self.client.post(f'/api/v1/appointments/{appt.id}/consultations/', consult_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('El peso debe ser mayor a 0 kg.', response.data['error'])
+
+    def test_appointment_consultation_invalid_temperature(self):
+        appt = Appointment.objects.create(
+            slot=self.slot,
+            patient=self.patient,
+            reason_for_visit='Vacunas',
+            status='SCHEDULED'
+        )
+        consult_payload = {
+            'diagnosis': 'Sano',
+            'treatment': 'Ninguno',
+            'weight': '10.5',
+            'temperature': '50.0'
+        }
+        response = self.client.post(f'/api/v1/appointments/{appt.id}/consultations/', consult_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('La temperatura debe estar en un rango fisiológico real', response.data['error'])
+
+    def test_rebook_cancelled_slot(self):
+        self.client.force_authenticate(user=self.owner_user)
+        # Create appointment on slot
+        appt = Appointment.objects.create(
+            slot=self.slot,
+            patient=self.patient,
+            reason_for_visit='Consulta inicial',
+            status='SCHEDULED'
+        )
+        self.slot.status = 'BOOKED'
+        self.slot.save()
+
+        # Cancel the appointment
+        cancel_resp = self.client.post(f'/api/v1/appointments/{appt.id}/cancel/')
+        self.assertEqual(cancel_resp.status_code, status.HTTP_200_OK)
+        
+        # Verify slot is FREE
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.status, 'FREE')
+
+        # Try to book a new appointment on the same slot
+        payload = {
+            'slot_id': self.slot.id,
+            'patient_id': self.patient.id,
+            'reason': 'Consulta secundaria'
+        }
+        response = self.client.post('/api/v1/appointments/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+

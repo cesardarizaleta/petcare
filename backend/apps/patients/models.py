@@ -43,6 +43,7 @@ class VaccinationDewormingEvent(models.Model):
     # Como la app 'clinic' no está visible, referenciamos el modelo en texto para evitar errores
     consultation = models.ForeignKey('appointments.Appointment', on_delete=models.SET_NULL, null=True, blank=True)
     event_type = models.CharField(max_length=15, choices=TYPE_CHOICES)
+    vaccine_name = models.CharField(max_length=100, default='', blank=True)
     dose = models.CharField(max_length=50)
     applied_date = models.DateField()
     sanitary_batch = models.CharField(max_length=100)

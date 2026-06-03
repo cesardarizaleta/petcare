@@ -81,6 +81,15 @@ class OwnerAppTests(TestCase):
         self.assertEqual(self.natural_person.phone, '+987654321')
         self.assertEqual(self.natural_person.address, 'Nueva Direccion 456')
 
+    def test_patch_owner_me_invalid_phone(self):
+        self.client.force_authenticate(user=self.owner_user)
+        payload = {
+            'phone': 'DFHSJD'
+        }
+        response = self.client.patch('/api/v1/owners/me/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone', response.data)
+
     def test_owner_me_pets_flow(self):
         self.client.force_authenticate(user=self.owner_user)
         
@@ -135,6 +144,17 @@ class OwnerAppTests(TestCase):
         response = self.client.get(f'/api/v1/owners/{self.owner_profile.pk}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['user']['email'], 'owner@test.com')
+
+        # Owner update via PATCH
+        payload = {
+            'first_name': 'Juan Carlos',
+            'phone': '+987654321',
+        }
+        response = self.client.patch(f'/api/v1/owners/{self.owner_profile.pk}/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('user', response.data)
+        self.assertEqual(response.data['user']['first_name'], 'Juan Carlos')
+        self.assertEqual(response.data['phone'], '+987654321')
 
     def test_permission_protection(self):
         # Authenticate as Owner trying to access Receptionist endpoints

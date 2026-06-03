@@ -152,7 +152,7 @@ class ReportingTestCase(APITestCase):
             lot_number='LOTE-B',
             expiration_date=self.today + timedelta(days=90),
             initial_stock=5,
-            current_stock=5, # Consumed: 0 (stock is 5, umbral is 15 -> Critical!)
+            current_stock=5, # Consumed: 0 (stock is 5, min_stock is 15 -> Critical!)
             acquisition_cost=Decimal('25.00')
         )
 
