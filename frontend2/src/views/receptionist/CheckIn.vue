@@ -1,5 +1,5 @@
 <script setup>
-  import { onMounted } from 'vue';
+  import { onMounted, reactive } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -8,12 +8,14 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const loadingAppointments = reactive({});
 
   onMounted(async () => {
     await appStore.fetchAppointmentsToday();
   });
 
   async function handleConfirm(appointment) {
+    loadingAppointments[appointment.id] = 'confirm';
     try {
       await appStore.confirmAppointment(appointment.id);
       toastStore.push({
@@ -23,10 +25,13 @@
       });
     } catch (e) {
       toastStore.push({ title: 'Error al confirmar', description: extractApiError(e), type: 'error' });
+    } finally {
+      delete loadingAppointments[appointment.id];
     }
   }
 
   async function handleCheckIn(appointment) {
+    loadingAppointments[appointment.id] = 'checkin';
     try {
       await appStore.checkInAppointment(appointment.id);
       toastStore.push({
@@ -36,10 +41,13 @@
       });
     } catch (e) {
       toastStore.push({ title: 'Error en check-in', description: extractApiError(e), type: 'error' });
+    } finally {
+      delete loadingAppointments[appointment.id];
     }
   }
 
   async function handleCancel(appointment) {
+    loadingAppointments[appointment.id] = 'cancel';
     try {
       await appStore.cancelAppointment(appointment.id);
       toastStore.push({
@@ -49,6 +57,8 @@
       });
     } catch (e) {
       toastStore.push({ title: 'Error al cancelar', description: extractApiError(e), type: 'error' });
+    } finally {
+      delete loadingAppointments[appointment.id];
     }
   }
 </script>
@@ -89,25 +99,28 @@
                   v-if="appointment.status === 'scheduled'"
                   class="btn btn--soft"
                   type="button"
+                  :disabled="!!loadingAppointments[appointment.id]"
                   @click="handleConfirm(appointment)"
                 >
-                  Confirmar
+                  {{ loadingAppointments[appointment.id] === 'confirm' ? 'Confirmando...' : 'Confirmar' }}
                 </button>
                 <button
                   v-if="appointment.status === 'confirmed' || appointment.status === 'scheduled'"
                   class="btn btn--soft"
                   type="button"
+                  :disabled="!!loadingAppointments[appointment.id]"
                   @click="handleCheckIn(appointment)"
                 >
-                  Check-in
+                  {{ loadingAppointments[appointment.id] === 'checkin' ? 'Registrando...' : 'Check-in' }}
                 </button>
                 <button
                   v-if="appointment.status !== 'completed' && appointment.status !== 'cancelled'"
                   class="btn btn--soft"
                   type="button"
+                  :disabled="!!loadingAppointments[appointment.id]"
                   @click="handleCancel(appointment)"
                 >
-                  Cancelar
+                  {{ loadingAppointments[appointment.id] === 'cancel' ? 'Cancelando...' : 'Cancelar' }}
                 </button>
               </div>
             </td>

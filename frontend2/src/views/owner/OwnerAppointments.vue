@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref, onMounted } from 'vue';
+  import { computed, ref, onMounted, reactive } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -8,6 +8,7 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const cancellingAppointments = reactive({});
 
   onMounted(async () => {
     try {
@@ -44,6 +45,7 @@
   }
 
   async function cancelAppointment(appointment) {
+    cancellingAppointments[appointment.id] = true;
     try {
       await appStore.cancelAppointment(appointment.id);
       toastStore.push({
@@ -59,6 +61,8 @@
         description: detail,
         type: 'error',
       });
+    } finally {
+      delete cancellingAppointments[appointment.id];
     }
   }
 </script>
@@ -127,9 +131,10 @@
                 v-if="canCancel(appointment)"
                 class="btn btn--soft"
                 type="button"
+                :disabled="!!cancellingAppointments[appointment.id]"
                 @click="cancelAppointment(appointment)"
               >
-                Cancelar
+                {{ cancellingAppointments[appointment.id] ? 'Cancelando...' : 'Cancelar' }}
               </button>
             </td>
           </tr>

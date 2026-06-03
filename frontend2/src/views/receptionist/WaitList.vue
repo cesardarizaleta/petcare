@@ -1,5 +1,5 @@
 <script setup>
-  import { onMounted } from 'vue';
+  import { onMounted, reactive } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
@@ -8,12 +8,14 @@
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const callingIds = reactive({});
 
   onMounted(async () => {
     await appStore.fetchWaitingList();
   });
 
   async function callNext(entry) {
+    callingIds[entry.id] = true;
     try {
       await appStore.callNextPatient(entry.id);
       toastStore.push({
@@ -23,6 +25,8 @@
       });
     } catch (e) {
       toastStore.push({ title: 'Error al llamar paciente', description: extractApiError(e), type: 'error' });
+    } finally {
+      delete callingIds[entry.id];
     }
   }
 </script>
@@ -67,9 +71,10 @@
               v-if="entry.status === 'WAITING'"
               class="btn btn--soft"
               type="button"
+              :disabled="!!callingIds[entry.id]"
               @click="callNext(entry)"
             >
-              Llamar
+              {{ callingIds[entry.id] ? 'Llamando...' : 'Llamar' }}
             </button>
             <span v-else class="chip chip--sage">En atención</span>
           </div>
