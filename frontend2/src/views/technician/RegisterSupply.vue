@@ -31,7 +31,8 @@ const resetForm = () => {
 };
 
 async function handleSubmit() {
-  if (form.value.min_stock === '' || form.value.min_stock === null || Number(form.value.min_stock) < 1) {
+  const minStockVal = Number(form.value.min_stock);
+  if (form.value.min_stock === '' || form.value.min_stock === null || isNaN(minStockVal) || minStockVal < 1) {
     toastStore.push({
       title: 'Error de validación',
       description: 'El nivel mínimo de existencias (stock mínimo) debe ser mayor o igual a 1.',
@@ -39,14 +40,33 @@ async function handleSubmit() {
     });
     return;
   }
-
-  if (form.value.stock_inicial !== '' && form.value.stock_inicial !== null && Number(form.value.stock_inicial) < 0) {
+  if (minStockVal > 100000) {
     toastStore.push({
       title: 'Error de validación',
-      description: 'El stock inicial no puede ser negativo.',
+      description: 'El nivel mínimo de existencias no puede superar las 100,000 unidades.',
       type: 'error'
     });
     return;
+  }
+
+  const stockInicialVal = Number(form.value.stock_inicial);
+  if (form.value.stock_inicial !== '' && form.value.stock_inicial !== null) {
+    if (isNaN(stockInicialVal) || stockInicialVal < 0) {
+      toastStore.push({
+        title: 'Error de validación',
+        description: 'El stock inicial no puede ser negativo.',
+        type: 'error'
+      });
+      return;
+    }
+    if (stockInicialVal > 100000) {
+      toastStore.push({
+        title: 'Error de validación',
+        description: 'El stock inicial no puede superar las 100,000 unidades.',
+        type: 'error'
+      });
+      return;
+    }
   }
 
   loading.value = true;
@@ -112,6 +132,7 @@ async function handleSubmit() {
             v-model="form.min_stock"
             type="number"
             min="1"
+            max="100000"
             required
             placeholder="Ejemplo: 10"
           />
@@ -124,6 +145,7 @@ async function handleSubmit() {
             v-model.number="form.stock_inicial"
             type="number"
             min="0"
+            max="100000"
             placeholder="Ejemplo: 30"
           />
         </div>
