@@ -9,7 +9,10 @@ const appStore = useAppStore();
 
 onMounted(async () => {
   try {
-    await appStore.fetchRequisitions();
+    await Promise.all([
+      appStore.fetchRequisitions(),
+      appStore.fetchInventory()
+    ]);
   } catch (err) {
     console.error('Error fetching requisitions in RequestDashboard:', err);
   }
@@ -25,6 +28,11 @@ const solicitudesFiltradas = computed(() => {
 
 const formatTotal = (value) =>
   formatMoney(value, { locale: 'en-US', currency: 'USD', maximumFractionDigits: 2 });
+
+const obtenerNombreInsumo = (insumoId) => {
+  const insumo = appStore.inventory.find(i => String(i.id) === String(insumoId));
+  return insumo ? insumo.name : `Insumo ID #${insumoId}`;
+};
 
 const getBadgeClass = (estado) => {
   if (estado === 'Pendiente') return 'badge--warning';
@@ -58,7 +66,8 @@ const getBadgeClass = (estado) => {
             <tr>
               <th>ID solicitud</th>
               <th>Fecha</th>
-              <th>Cantidad de productos</th>
+              <th>Productos solicitados (Nombre e ID)</th>
+              <th>Cantidad total</th>
               <th>Costo total estimado</th>
               <th>Estado</th>
             </tr>
@@ -67,6 +76,13 @@ const getBadgeClass = (estado) => {
             <tr v-for="solicitud in solicitudesFiltradas" :key="solicitud.id" class="table__row">
               <td>#{{ solicitud.id }}</td>
               <td>{{ solicitud.fecha }}</td>
+              <td>
+                <div class="items-cell">
+                  <p v-for="item in solicitud.items" :key="item.insumoId" class="item-cell-row">
+                    • {{ obtenerNombreInsumo(item.insumoId) }} (ID: #{{ item.insumoId }}) — <strong>{{ item.quantity }} uds.</strong>
+                  </p>
+                </div>
+              </td>
               <td>{{ solicitud.cantidadProductos }} uds.</td>
               <td>{{ formatTotal(solicitud.total) }}</td>
               <td>
@@ -125,5 +141,16 @@ const getBadgeClass = (estado) => {
 .badge--danger {
   background-color: #e74c3c;
   color: white;
+}
+
+.items-cell {
+  text-align: left;
+  font-size: 0.85rem;
+  max-width: 350px;
+}
+
+.item-cell-row {
+  margin: 4px 0;
+  color: #334155;
 }
 </style>
