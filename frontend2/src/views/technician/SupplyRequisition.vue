@@ -37,6 +37,32 @@ watch(
 
 const itemsSolicitados = ref([]);
 
+const preventNegative = (e) => {
+  if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+    e.preventDefault();
+  }
+};
+
+const sanitizeQuantity = () => {
+  if (form.value.quantity === '' || form.value.quantity === null) return;
+  const val = Number(form.value.quantity);
+  if (val < 1) {
+    form.value.quantity = 1;
+  } else if (val > 100000) {
+    form.value.quantity = 100000;
+  }
+};
+
+const sanitizeItemQuantity = (item) => {
+  if (item.quantity === '' || item.quantity === null) return;
+  const val = Number(item.quantity);
+  if (val < 1) {
+    item.quantity = 1;
+  } else if (val > 100000) {
+    item.quantity = 100000;
+  }
+};
+
 const getSupplyById = (id) =>
   listaInsumos.value.find((insumo) => String(insumo.id) === String(id));
 
@@ -50,10 +76,28 @@ const agregarInsumoALista = () => {
 
   const id = String(form.value.insumoId);
   const cantidad = Number(form.value.quantity);
+  if (isNaN(cantidad) || cantidad < 1 || cantidad > 100000) {
+    toastStore.push({
+      title: 'Cantidad inválida',
+      description: 'La cantidad debe estar entre 1 y 100,000 unidades.',
+      type: 'error'
+    });
+    return;
+  }
+
   const existe = itemsSolicitados.value.find((item) => String(item.insumoId) === String(id));
 
   if (existe) {
-    existe.quantity += cantidad;
+    const nuevaCant = existe.quantity + cantidad;
+    if (nuevaCant > 100000) {
+      toastStore.push({
+        title: 'Límite excedido',
+        description: 'La cantidad total solicitada para este insumo no puede superar las 100,000 unidades.',
+        type: 'error'
+      });
+      return;
+    }
+    existe.quantity = nuevaCant;
   } else {
     itemsSolicitados.value.push({ insumoId: id, quantity: cantidad });
   }
@@ -143,8 +187,12 @@ const enviarAlGerente = async () => {
             v-model.number="form.quantity"
             type="number"
             min="1"
+            max="100000"
             required
             placeholder="1"
+            @keypress="preventNegative"
+            @input="sanitizeQuantity"
+            @blur="sanitizeQuantity"
           />
         </div>
 
@@ -181,6 +229,10 @@ const enviarAlGerente = async () => {
                     type="number"
                     v-model.number="item.quantity"
                     min="1"
+                    max="100000"
+                    @keypress="preventNegative"
+                    @input="() => sanitizeItemQuantity(item)"
+                    @blur="() => sanitizeItemQuantity(item)"
                   />
                 </td>
                 <td>{{ formatUnitCost(getUnitCost(getSupplyById(item.insumoId))) }}</td>
