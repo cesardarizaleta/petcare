@@ -14,6 +14,7 @@
     getOwnerAppointments,
     getOwnerPets,
     getPet,
+    getSpeciesLabel,
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
@@ -129,7 +130,7 @@
               </p>
             </div>
             <div class="stack" style="justify-items: end; gap: 8px">
-              <span class="chip chip--sage">{{ pet.species }}</span>
+              <span class="chip chip--sage">{{ getSpeciesLabel(pet.species) }}</span>
             </div>
           </article>
         </div>

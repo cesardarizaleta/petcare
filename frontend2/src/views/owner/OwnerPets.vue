@@ -13,6 +13,7 @@
     getOwnerPets,
     extractApiError,
     todayISO,
+    getSpeciesLabel,
   } from '@/lib/petcare';
 
   const appStore = useAppStore();
@@ -136,7 +137,7 @@
               </div>
             </div>
             <div class="stack" style="justify-items: end; gap: 8px">
-              <span class="chip chip--sage">{{ pet.species }}</span>
+              <span class="chip chip--sage">{{ getSpeciesLabel(pet.species) }}</span>
               <span class="muted"
                 >Vacunas:
                 {{ getLatestVaccine(appStore.vaccines, pet.id) ? 'Activas' : 'Sin datos' }}</span

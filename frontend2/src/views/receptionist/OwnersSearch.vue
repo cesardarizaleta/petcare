@@ -6,7 +6,8 @@
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { formatDate, getOwnerAppointments, getOwnerPets, getPet, extractApiError } from '@/lib/petcare';
+  import { formatDate, getOwnerAppointments, getOwnerPets, getPet, extractApiError,
+           getSpeciesLabel } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -210,7 +211,7 @@
                   <PetAvatar :pet="pet" size="sm" />
                   <div class="list__item-main">
                     <p class="list__title" style="font-size: 0.95rem;">{{ pet.name }}</p>
-                    <p class="list__subtitle" style="font-size: 0.82rem;">{{ pet.breed }} ({{ pet.species }})</p>
+                    <p class="list__subtitle" style="font-size: 0.82rem;">{{ pet.breed }} ({{ getSpeciesLabel(pet.species) }})</p>
                   </div>
                 </div>
               </article>
