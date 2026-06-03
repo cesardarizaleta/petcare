@@ -34,10 +34,16 @@ const obtenerNombreInsumo = (insumoId) => {
   return insumo ? insumo.name : `Insumo ID #${insumoId}`;
 };
 
+const formatShortId = (id) => {
+  if (!id) return '';
+  const str = String(id).replace(/^#/, '');
+  return str.length > 8 ? `#${str.slice(0, 8)}...` : `#${str}`;
+};
+
 const getBadgeClass = (estado) => {
-  if (estado === 'Pendiente') return 'badge--warning';
-  if (estado === 'Aprobada') return 'badge--success';
-  if (estado === 'Rechazada') return 'badge--danger';
+  if (estado === 'Pendiente') return 'chip--warning';
+  if (estado === 'Aprobada') return 'chip--success';
+  if (estado === 'Rechazada') return 'chip--danger';
   return '';
 };
 </script>
@@ -51,7 +57,7 @@ const getBadgeClass = (estado) => {
 
     <DashboardCard title="Historial de solicitudes enviadas" icon="clipboard-list">
       <div class="filter-container">
-        <label for="filtro-estado">Filtrar por estado:</label>
+        <label for="filtro-estado" class="field__label">Filtrar por estado:</label>
         <select id="filtro-estado" v-model="filtroEstado" class="select filter-select">
           <option value="Todos">Mostrar todas</option>
           <option value="Pendiente">Pendiente</option>
@@ -64,29 +70,37 @@ const getBadgeClass = (estado) => {
         <table class="table">
           <thead>
             <tr>
-              <th>ID solicitud</th>
-              <th>Fecha</th>
-              <th>Productos solicitados (Nombre e ID)</th>
-              <th>Cantidad total</th>
-              <th>Costo total estimado</th>
-              <th>Estado</th>
+              <th class="col-id">ID solicitud</th>
+              <th class="col-date">Fecha</th>
+              <th class="col-products">Productos solicitados (Nombre e ID)</th>
+              <th class="col-qty text-right">Cantidad total</th>
+              <th class="col-total text-right">Costo total estimado</th>
+              <th class="col-status text-center">Estado</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="solicitud in solicitudesFiltradas" :key="solicitud.id" class="table__row">
-              <td>#{{ solicitud.id }}</td>
-              <td>{{ solicitud.fecha }}</td>
-              <td>
-                <div class="items-cell">
-                  <p v-for="item in solicitud.items" :key="item.insumoId" class="item-cell-row">
-                    • {{ obtenerNombreInsumo(item.insumoId) }} (ID: #{{ item.insumoId }}) — <strong>{{ item.quantity }} uds.</strong>
-                  </p>
+              <td class="col-id">
+                <span class="uuid-tag" :title="solicitud.id">{{ formatShortId(solicitud.id) }}</span>
+              </td>
+              <td class="col-date">
+                <span class="date-text">{{ solicitud.fecha }}</span>
+              </td>
+              <td class="col-products">
+                <div class="products-list">
+                  <div v-for="item in solicitud.items" :key="item.insumoId" class="product-item">
+                    <div class="product-info">
+                      <span class="product-name">{{ obtenerNombreInsumo(item.insumoId) }}</span>
+                      <span class="product-id-tag" :title="item.insumoId">ID: {{ formatShortId(item.insumoId) }}</span>
+                    </div>
+                    <span class="product-qty">{{ item.quantity }} uds.</span>
+                  </div>
                 </div>
               </td>
-              <td>{{ solicitud.cantidadProductos }} uds.</td>
-              <td>{{ formatTotal(solicitud.total) }}</td>
-              <td>
-                <span :class="['badge', getBadgeClass(solicitud.estado)]">
+              <td class="col-qty text-right text-strong">{{ solicitud.cantidadProductos }} uds.</td>
+              <td class="col-total text-right text-strong price-text">{{ formatTotal(solicitud.total) }}</td>
+              <td class="col-status text-center">
+                <span :class="['chip', getBadgeClass(solicitud.estado)]">
                   {{ solicitud.estado }}
                 </span>
               </td>
@@ -120,37 +134,134 @@ const getBadgeClass = (estado) => {
   color: rgba(61, 61, 61, 0.6);
 }
 
-.badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  display: inline-block;
+/* Column Widths & Alignments */
+.col-id {
+  width: 140px;
+  white-space: nowrap;
 }
 
-.badge--warning {
-  background-color: #f39c12;
-  color: white;
+.col-date {
+  width: 120px;
 }
 
-.badge--success {
-  background-color: #2ecc71;
-  color: white;
+.col-products {
+  /* products column can take the remaining space */
 }
 
-.badge--danger {
-  background-color: #e74c3c;
-  color: white;
+.col-qty {
+  width: 150px;
 }
 
-.items-cell {
-  text-align: left;
+.col-total {
+  width: 180px;
+}
+
+.col-status {
+  width: 140px;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-strong {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* UUID Tag styling */
+.uuid-tag {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--brand-strong);
+  background: rgba(194, 167, 105, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: help;
   font-size: 0.85rem;
-  max-width: 350px;
+  display: inline-block;
+  border: 1px solid rgba(194, 167, 105, 0.2);
+  transition: all 0.15s ease;
 }
 
-.item-cell-row {
-  margin: 4px 0;
-  color: #334155;
+.uuid-tag:hover {
+  background: rgba(194, 167, 105, 0.18);
+  border-color: var(--brand);
+}
+
+/* Date text */
+.date-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Products List Cell */
+.products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 280px;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(247, 241, 230, 0.4);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  transition: background-color 0.15s ease;
+}
+
+.product-item:hover {
+  background: rgba(247, 241, 230, 0.7);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-strong);
+}
+
+.product-id-tag {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: rgba(61, 61, 61, 0.55);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+  cursor: help;
+}
+
+.product-qty {
+  font-weight: 700;
+  color: var(--sage-strong);
+  background: rgba(165, 186, 142, 0.12);
+  border: 1px solid rgba(165, 186, 142, 0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Price text formatting */
+.price-text {
+  font-family: monospace;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 </style>
