@@ -315,6 +315,7 @@
     padding: 12px 16px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 12px;
+    min-width: 0;
   }
   .section-divider {
     border-top: 1px solid var(--border);
@@ -329,10 +330,23 @@
     margin-bottom: 22px;
   }
 
+  .owner-summary-grid > * {
+    min-width: 0;
+  }
+
   .select,
   .input,
   .textarea {
     max-width: 100%;
+    min-width: 0;
+  }
+
+  .stack > * {
+    min-width: 0;
+  }
+
+  .split > * {
+    min-width: 0;
   }
 
   .list__item-main {
@@ -344,6 +358,10 @@
   .list__subtitle {
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+
+  .list__item {
+    min-width: 0;
   }
 
   @media (max-width: 600px) {
@@ -365,6 +383,9 @@
     .list__item > :deep(.status-badge) {
       align-self: flex-start;
       margin-top: 4px;
+    }
+    .card {
+      padding: 16px !important;
     }
   }
 </style>
