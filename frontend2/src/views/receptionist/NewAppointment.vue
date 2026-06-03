@@ -201,7 +201,7 @@
             <span>Motivo de la consulta *</span>
             <input v-model="form.reason" class="input" type="text" placeholder="Control anual / Consulta" required />
           </label>
-          <div class="input-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="date-time-grid">
             <label class="field">
               <span>Fecha *</span>
               <input v-model="form.date" class="input" type="date" :min="minDate" :max="maxDate" required />
@@ -234,3 +234,29 @@
     </section>
   </div>
 </template>
+
+<style scoped>
+  .date-time-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .select,
+  .input,
+  .textarea {
+    max-width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    .date-time-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .card {
+      padding: 16px;
+    }
+  }
+</style>
