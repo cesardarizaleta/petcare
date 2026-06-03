@@ -48,6 +48,22 @@ const resetForm = () => {
   }
 };
 
+const preventNegative = (e) => {
+  if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+    e.preventDefault();
+  }
+};
+
+const sanitizeQuantity = () => {
+  if (form.value.quantity === '' || form.value.quantity === null) return;
+  const val = Number(form.value.quantity);
+  if (val < 1) {
+    form.value.quantity = 1;
+  } else if (val > 100000) {
+    form.value.quantity = 100000;
+  }
+};
+
 const guardarEntrada = async () => {
   if (!form.value.insumoId || !form.value.batch || !form.value.expirationDate) {
     toastStore.push({
@@ -58,10 +74,19 @@ const guardarEntrada = async () => {
     return;
   }
 
-  if (form.value.quantity <= 0) {
+  const quantityVal = Number(form.value.quantity);
+  if (isNaN(quantityVal) || quantityVal <= 0) {
     toastStore.push({
       title: 'Cantidad inválida',
       description: 'La cantidad recibida debe ser un número positivo.',
+      type: 'error',
+    });
+    return;
+  }
+  if (quantityVal > 100000) {
+    toastStore.push({
+      title: 'Cantidad inválida',
+      description: 'La cantidad recibida no puede superar las 100,000 unidades.',
       type: 'error',
     });
     return;
@@ -128,8 +153,12 @@ const guardarEntrada = async () => {
             v-model.number="form.quantity"
             type="number"
             min="1"
+            max="100000"
             required
             placeholder="1"
+            @keypress="preventNegative"
+            @input="sanitizeQuantity"
+            @blur="sanitizeQuantity"
           />
         </div>
 
