@@ -59,8 +59,8 @@ class OwnerUpdateSerializer(serializers.ModelSerializer):
     Usado en: PATCH /owners/me/
     """
 
-    first_name = serializers.CharField(source='user.first_name', required=False)
-    last_name = serializers.CharField(source='user.last_name', required=False)
+    first_name = serializers.CharField(source='user.first_name', required=False, allow_null=True, allow_blank=True)
+    last_name = serializers.CharField(source='user.last_name', required=False, allow_null=True, allow_blank=True)
     phone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     address = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     dni = serializers.CharField(required=False, allow_null=True, allow_blank=True)
