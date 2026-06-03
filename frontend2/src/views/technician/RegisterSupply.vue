@@ -30,6 +30,32 @@ const resetForm = () => {
   Object.assign(form.value, EMPTY_FORM);
 };
 
+const preventNegative = (e) => {
+  if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+    e.preventDefault();
+  }
+};
+
+const sanitizeMinStock = () => {
+  if (form.value.min_stock === '' || form.value.min_stock === null) return;
+  const val = Number(form.value.min_stock);
+  if (val < 1) {
+    form.value.min_stock = 1;
+  } else if (val > 100000) {
+    form.value.min_stock = 100000;
+  }
+};
+
+const sanitizeStockInicial = () => {
+  if (form.value.stock_inicial === '' || form.value.stock_inicial === null) return;
+  const val = Number(form.value.stock_inicial);
+  if (val < 0) {
+    form.value.stock_inicial = 0;
+  } else if (val > 100000) {
+    form.value.stock_inicial = 100000;
+  }
+};
+
 async function handleSubmit() {
   const minStockVal = Number(form.value.min_stock);
   if (form.value.min_stock === '' || form.value.min_stock === null || isNaN(minStockVal) || minStockVal < 1) {
@@ -135,6 +161,9 @@ async function handleSubmit() {
             max="100000"
             required
             placeholder="Ejemplo: 10"
+            @keypress="preventNegative"
+            @input="sanitizeMinStock"
+            @blur="sanitizeMinStock"
           />
         </div>
         <div class="field">
@@ -147,6 +176,9 @@ async function handleSubmit() {
             min="0"
             max="100000"
             placeholder="Ejemplo: 30"
+            @keypress="preventNegative"
+            @input="sanitizeStockInicial"
+            @blur="sanitizeStockInicial"
           />
         </div>
         <div class="field">
