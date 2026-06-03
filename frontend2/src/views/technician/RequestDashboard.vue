@@ -117,9 +117,17 @@ const getBadgeClass = (estado) => {
 </template>
 
 <style scoped>
+.select,
+.input,
+.textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .filter-container {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin: 20px 0;
 }
@@ -132,6 +140,18 @@ const getBadgeClass = (estado) => {
   padding: 40px 20px;
   text-align: center;
   color: rgba(61, 61, 61, 0.6);
+}
+
+.stack > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Column Widths & Alignments */
@@ -228,12 +248,16 @@ const getBadgeClass = (estado) => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
 .product-name {
   font-weight: 600;
   font-size: 0.88rem;
   color: var(--text-strong);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .product-id-tag {
@@ -263,5 +287,39 @@ const getBadgeClass = (estado) => {
   font-family: monospace;
   font-size: 0.95rem;
   letter-spacing: -0.01em;
+}
+
+/* Responsive Overrides */
+@media (max-width: 600px) {
+  .products-list {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  :deep(.card) {
+    padding: 16px !important;
+  }
+
+  :deep(.page-header) {
+    padding: 16px !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  :deep(.page-header__subtitle) {
+    margin-left: 0 !important;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filter-select {
+    max-width: 100%;
+  }
 }
 </style>
