@@ -182,7 +182,7 @@
             </button>
           </div>
 
-          <div class="summary-grid" style="margin-top: 18px; margin-bottom: 22px; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div class="owner-summary-grid">
             <div class="card card--stat">
               <p class="eyebrow" style="margin-bottom: 4px;">Teléfono</p>
               <strong>{{ selectedOwner.phone || '—' }}</strong>
@@ -272,7 +272,7 @@
               <textarea v-model="editForm.address" class="textarea" rows="3" placeholder="Dirección de residencia"></textarea>
             </label>
 
-            <div class="toolbar" style="justify-content: flex-end; gap: 12px; margin-top: 14px; display: flex;">
+            <div class="toolbar" style="justify-content: flex-end; gap: 12px; margin-top: 14px; display: flex; flex-wrap: wrap;">
               <button class="btn btn--ghost" type="button" @click="cancelEdit" :disabled="saving">
                 Cancelar
               </button>
@@ -305,6 +305,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 14px;
     margin-bottom: 14px;
@@ -317,5 +319,38 @@
   .section-divider {
     border-top: 1px solid var(--border);
     padding-top: 16px;
+  }
+
+  .owner-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+    margin-bottom: 22px;
+  }
+
+  .select,
+  .input,
+  .textarea {
+    max-width: 100%;
+  }
+
+  .list__item-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .list__title,
+  .list__subtitle {
+    word-break: break-word;
+  }
+
+  @media (max-width: 600px) {
+    .owner-summary-grid {
+      grid-template-columns: 1fr;
+    }
+    .owner-summary-grid > div {
+      grid-column: span 1 !important;
+    }
   }
 </style>
