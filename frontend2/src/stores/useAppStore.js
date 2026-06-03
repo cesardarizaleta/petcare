@@ -97,7 +97,7 @@ export const useAppStore = defineStore('app', {
     async register(payload) {
       const nameParts = payload.name.trim().split(' ');
       const first_name = nameParts[0] || 'Nuevo';
-      const last_name = nameParts.slice(1).join(' ') || 'Propietario';
+      const last_name = nameParts.slice(1).join(' ') || '';
       
       const registerPayload = {
         email: payload.email,
