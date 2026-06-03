@@ -317,6 +317,11 @@
     border-radius: 12px;
     min-width: 0;
   }
+  .card--stat strong {
+    display: block;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .section-divider {
     border-top: 1px solid var(--border);
     padding-top: 16px;
