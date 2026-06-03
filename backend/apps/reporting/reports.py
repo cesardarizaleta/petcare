@@ -22,7 +22,9 @@ def get_date_range(periodo, from_date=None, to_date=None):
     if periodo == 'hoy':
         return today, today
     elif periodo == 'esta_semana':
-        return today - datetime.timedelta(days=7), today
+        # Start from Monday of the current week (weekday() returns 0 for Monday)
+        monday = today - datetime.timedelta(days=today.weekday())
+        return monday, today
     elif periodo == 'este_mes':
         return today.replace(day=1), today
     else:
