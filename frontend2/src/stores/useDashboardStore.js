@@ -71,5 +71,22 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   };
 
-  return { kpis, revenueData, isLoading, hasData, fetchDashboardData, exportReport };
+  const fetchReportJson = async (periodo = 'este_mes', fromDate = null, toDate = null) => {
+    try {
+      const params = {
+        export_format: 'json',
+        periodo
+      };
+      if (fromDate) params.from = fromDate;
+      if (toDate) params.to = toDate;
+
+      const response = await http.get('/api/v1/reporting/export/', { params });
+      return response.data;
+    } catch (e) {
+      console.error('Error fetching JSON report:', e);
+      throw e;
+    }
+  };
+
+  return { kpis, revenueData, isLoading, hasData, fetchDashboardData, exportReport, fetchReportJson };
 });

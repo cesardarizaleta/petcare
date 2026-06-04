@@ -68,6 +68,15 @@
             <span v-else class="loader-spinner"></span>
             Exportar JSON
           </button>
+          <button 
+            @click="exportarReporteExcel" 
+            :disabled="isExportingExcel"
+            class="btn btn--ghost export-btn excel-btn"
+          >
+            <AppIcon v-if="!isExportingExcel" name="download" :size="16" />
+            <span v-else class="loader-spinner"></span>
+            Exportar Excel (XLSX)
+          </button>
         </div>
       </div>
     </div>
@@ -135,6 +144,7 @@
 
   const isExportingCsv = ref(false);
   const isExportingJson = ref(false);
+  const isExportingExcel = ref(false);
 
   onMounted(() => {
     dashboardStore.fetchDashboardData(periodo.value);
@@ -168,6 +178,24 @@
     } finally {
       if (formato === 'csv') isExportingCsv.value = false;
       if (formato === 'json') isExportingJson.value = false;
+    }
+  };
+
+  const exportarReporteExcel = async () => {
+    isExportingExcel.value = true;
+    try {
+      const isCustom = periodo.value === 'personalizado';
+      const data = await dashboardStore.fetchReportJson(
+        periodo.value,
+        isCustom ? fechaDesde.value : null,
+        isCustom ? fechaHasta.value : null
+      );
+      const { exportDashboardToExcel } = await import('@/lib/excelExport');
+      await exportDashboardToExcel(data, periodo.value);
+    } catch (err) {
+      console.error('Error exporting Excel report:', err);
+    } finally {
+      isExportingExcel.value = false;
     }
   };
 
@@ -260,6 +288,15 @@
     padding: 0.6rem 1.2rem;
     font-size: 0.875rem;
     border-radius: 999px;
+  }
+
+  .excel-btn {
+    border-color: #27ae60 !important;
+    color: #27ae60 !important;
+  }
+
+  .excel-btn:hover {
+    background-color: rgba(39, 174, 96, 0.08) !important;
   }
 
   .kpi-grid {
