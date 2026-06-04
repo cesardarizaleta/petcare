@@ -57,12 +57,12 @@ class IsClient(BasePermission):
 
 class IsManager(BasePermission):
     """
-    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'manager'.
+    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'manager' o es superusuario.
     """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.groups.filter(name='manager').exists()
+        return request.user.groups.filter(name='manager').exists() or request.user.is_superuser
 
 
 class CustomModelPermissions(permissions.BasePermission):

@@ -108,7 +108,7 @@ def seed_data():
         owner_user.set_password('petcare123')
         owner_user.save()
     owner_user.groups.add(owner_group)
-    owner_np = NaturalPerson.objects.get(user=owner_user)
+    owner_np, _ = NaturalPerson.objects.get_or_create(user=owner_user)
     owner_np.phone = '+541155554444'
     owner_np.address = 'Av. Libertador 1420, CABA'
     owner_np.dni = '35123456'
@@ -132,7 +132,7 @@ def seed_data():
         receptionist_user.set_password('petcare123')
         receptionist_user.save()
     receptionist_user.groups.add(receptionist_group)
-    receptionist_np = NaturalPerson.objects.get(user=receptionist_user)
+    receptionist_np, _ = NaturalPerson.objects.get_or_create(user=receptionist_user)
     receptionist_np.phone = '+541155552222'
     receptionist_np.address = 'Sede Centro'
     receptionist_np.dni = '28456123'
@@ -153,7 +153,7 @@ def seed_data():
         vet_user.set_password('petcare123')
         vet_user.save()
     vet_user.groups.add(veterinarian_group)
-    vet_np = NaturalPerson.objects.get(user=vet_user)
+    vet_np, _ = NaturalPerson.objects.get_or_create(user=vet_user)
     vet_np.phone = '+541155553333'
     vet_np.address = 'Sede Palermo'
     vet_np.dni = '30123789'
@@ -170,14 +170,18 @@ def seed_data():
             'last_name': 'Gerente',
             'is_active': True,
             'is_staff': True,
-            'is_superuser': True
+            'is_superuser': False
         }
     )
     if created:
         manager_user.set_password('petcare123')
         manager_user.save()
+    else:
+        manager_user.is_superuser = False
+        manager_user.is_staff = True
+        manager_user.save()
     manager_user.groups.add(manager_group)
-    manager_np = NaturalPerson.objects.get(user=manager_user)
+    manager_np, _ = NaturalPerson.objects.get_or_create(user=manager_user)
     ClinicalStaff.objects.get_or_create(user=manager_user, defaults={'natural_person': manager_np})
 
     # Técnico de Inventario (Technician)
@@ -194,8 +198,30 @@ def seed_data():
         tech_user.set_password('petcare123')
         tech_user.save()
     tech_user.groups.add(tech_group, vet_tech_group)
-    tech_np = NaturalPerson.objects.get(user=tech_user)
+    tech_np, _ = NaturalPerson.objects.get_or_create(user=tech_user)
     ClinicalStaff.objects.get_or_create(user=tech_user, defaults={'natural_person': tech_np})
+
+    # Super Administrador (SuperAdmin)
+    superadmin_user, created = User.objects.get_or_create(
+        email='superadmin@petcare.com',
+        defaults={
+            'username': 'super_admin',
+            'first_name': 'Super',
+            'last_name': 'Administrador',
+            'is_active': True,
+            'is_staff': True,
+            'is_superuser': True
+        }
+    )
+    if created:
+        superadmin_user.set_password('petcare123')
+        superadmin_user.save()
+    else:
+        superadmin_user.is_superuser = True
+        superadmin_user.is_staff = True
+        superadmin_user.save()
+    superadmin_np, _ = NaturalPerson.objects.get_or_create(user=superadmin_user)
+    ClinicalStaff.objects.get_or_create(user=superadmin_user, defaults={'natural_person': superadmin_np})
 
     print("Usuarios y roles base asegurados.")
 

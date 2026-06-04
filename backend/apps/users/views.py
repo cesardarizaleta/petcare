@@ -11,7 +11,8 @@ from apps.users.serializers import SupplySerializer, AuditLogSerializer
 from apps.users.permissions import (
     DjangoModelPermissions,
     IsReceptionist,
-    IsOwner
+    IsOwner,
+    IsManager
 )
 
 
@@ -206,7 +207,7 @@ class ReceptionistTestView(APIView):
 
 
 class ManagerDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [IsAuthenticated, IsManager]
     
     def get(self, request):
         sensitive_data = {
@@ -232,7 +233,7 @@ class VerifyUserView(APIView):
 
 
 class LogDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [IsAuthenticated, IsManager]
 
     def get(self, request):
         logs = AuditLog.objects.all().order_by('-timestamp')[:50]
