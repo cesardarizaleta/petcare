@@ -114,6 +114,10 @@ def login(request):
         if not user.is_active:
             return Response({'detail': 'Usuario inactivo.'}, status=status.HTTP_403_FORBIDDEN)
             
+        groups = list(user.groups.values_list('name', flat=True))
+        if user.is_superuser:
+            groups.append('superadmin')
+            
         refresh = RefreshToken.for_user(user)
         return Response({
             "access": str(refresh.access_token),
@@ -123,7 +127,7 @@ def login(request):
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "groups": list(user.groups.values_list('name', flat=True))
+                "groups": groups
             }
         }, status=status.HTTP_200_OK)
     except User.DoesNotExist:
@@ -234,3 +238,131 @@ class LogDashboardView(APIView):
         logs = AuditLog.objects.all().order_by('-timestamp')[:50]
         serializer = AuditLogSerializer(logs, many=True)
         return Response(serializer.data)
+
+
+from rest_framework.permissions import BasePermission
+
+class IsSuperAdminUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.is_superuser
+
+
+class SuperAdminUserViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated, IsSuperAdminUser]
+
+    def list(self, request):
+        users_data = []
+        for u in User.objects.all().order_by('email'):
+            groups = list(u.groups.values_list('name', flat=True))
+            if u.is_superuser and 'superadmin' not in groups:
+                groups.append('superadmin')
+            users_data.append({
+                "id": str(u.id),
+                "email": u.email,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "is_active": u.is_active,
+                "roles": groups
+            })
+        return Response(users_data)
+
+    def create(self, request):
+        data = request.data
+        email = data.get('email')
+        password = data.get('password')
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+        roles = data.get('roles', [])
+
+        if not email or not password:
+            return Response({'error': 'Email y contraseña son obligatorios.'}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'Este correo electrónico ya está registrado.'}, status=400)
+
+        try:
+            user = User.objects.create(
+                email=email,
+                username=email.split('@')[0],
+                first_name=first_name,
+                last_name=last_name,
+                is_active=True
+            )
+            user.set_password(password)
+            user.save()
+
+            for role_name in roles:
+                if role_name == 'superadmin':
+                    user.is_superuser = True
+                    user.is_staff = True
+                    user.save()
+                else:
+                    group, _ = Group.objects.get_or_create(name=role_name)
+                    user.groups.add(group)
+
+            return Response({
+                "id": str(user.id),
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "roles": roles,
+                "message": "Usuario creado exitosamente por el Superadmin."
+            }, status=201)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+    def update(self, request, pk=None):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado.'}, status=404)
+
+        data = request.data
+        user.first_name = data.get('first_name', user.first_name)
+        user.last_name = data.get('last_name', user.last_name)
+        user.is_active = data.get('is_active', user.is_active)
+        
+        password = data.get('password')
+        if password:
+            user.set_password(password)
+        
+        user.save()
+
+        roles = data.get('roles')
+        if roles is not None:
+            user.groups.clear()
+            user.is_superuser = False
+            user.is_staff = False
+            
+            for role_name in roles:
+                if role_name == 'superadmin':
+                    user.is_superuser = True
+                    user.is_staff = True
+                else:
+                    group, _ = Group.objects.get_or_create(name=role_name)
+                    user.groups.add(group)
+            user.save()
+
+        groups = list(user.groups.values_list('name', flat=True))
+        if user.is_superuser:
+            groups.append('superadmin')
+
+        return Response({
+            "id": str(user.id),
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_active": user.is_active,
+            "roles": groups,
+            "message": "Usuario actualizado exitosamente."
+        })
+
+    def destroy(self, request, pk=None):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado.'}, status=404)
+
+        user.is_active = False
+        user.save()
+        return Response({"message": "Usuario desactivado exitosamente."})

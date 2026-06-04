@@ -7,6 +7,7 @@ export const appTemplate = {
     vet: { label: 'Veterinario', accent: '#7D6430', light: '#F7F1E6' },
     technician: { label: 'Técnico Veterinario', accent: '#7da84e', light: '#F3F6F0' },
     manager: { label: 'Gerente', accent: '#7aa250', light: '#F7F1E6' },
+    superadmin: { label: 'Super Administrador', accent: '#8E44AD', light: '#F5EEF8' },
   },
   navigation: {
     owner: [
@@ -47,6 +48,9 @@ export const appTemplate = {
     manager: [
       { to: '/manager/requests', icon: 'clipboard-check', label: 'Solicitudes del Gerente' },
       { to: '/manager/dashboard', icon: 'layout-dashboard', label: 'Tablero Gerencial' },
+    ],
+    superadmin: [
+      { to: '/superadmin/dashboard', icon: 'users', label: 'Gestión de Usuarios' },
     ],
   },
   roleSwitcher: [

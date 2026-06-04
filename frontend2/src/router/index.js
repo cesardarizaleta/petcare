@@ -35,6 +35,7 @@ const routeRoleMap = {
   '/vet': ['vet', 'veterinarian'],
   '/technician': ['technician'],
   '/manager': ['manager'],
+  '/superadmin': ['superadmin'],
 };
 
 // Role-based default dashboards
@@ -45,6 +46,7 @@ const roleDashboardMap = {
   veterinarian: '/vet/dashboard',
   technician: '/technician/inventory',
   manager: '/manager/dashboard',
+  superadmin: '/superadmin/dashboard',
 };
 
 export const router = createRouter({
@@ -113,6 +115,14 @@ export const router = createRouter({
       children: [
         { path: 'dashboard', name: 'ManagerDashboard', component: DashboardView },
         { path: 'requests', component: RequestPanel },
+      ],
+    },
+    {
+      path: '/superadmin',
+      component: AppLayout,
+      meta: { requiredRole: 'superadmin' },
+      children: [
+        { path: 'dashboard', component: () => import('@/views/superadmin/SuperAdminDashboard.vue') },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/login' },

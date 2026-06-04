@@ -4,6 +4,7 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'supplies-test', views.SupplyViewSet, basename='supply-test')
+router.register(r'superadmin/users', views.SuperAdminUserViewSet, basename='superadmin-users')
 
 urlpatterns = [
     # Auth endpoints

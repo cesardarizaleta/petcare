@@ -58,7 +58,9 @@ export const useAppStore = defineStore('app', {
       // Determine role from user groups
       let role = 'owner';
       const groups = user.groups || [];
-      if (groups.includes('manager')) {
+      if (groups.includes('superadmin')) {
+        role = 'superadmin';
+      } else if (groups.includes('manager')) {
         role = 'manager';
       } else if (groups.includes('technician') || groups.includes('veterinary_technician')) {
         role = 'technician';
