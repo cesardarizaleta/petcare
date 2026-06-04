@@ -213,13 +213,10 @@ def seed_data():
             'is_superuser': True
         }
     )
-    if created:
-        superadmin_user.set_password('petcare123')
-        superadmin_user.save()
-    else:
-        superadmin_user.is_superuser = True
-        superadmin_user.is_staff = True
-        superadmin_user.save()
+    superadmin_user.is_superuser = True
+    superadmin_user.is_staff = True
+    superadmin_user.set_password('petcare123')
+    superadmin_user.save()
     superadmin_np, _ = NaturalPerson.objects.get_or_create(user=superadmin_user)
     ClinicalStaff.objects.get_or_create(user=superadmin_user, defaults={'natural_person': superadmin_np})
 
