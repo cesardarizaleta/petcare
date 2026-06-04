@@ -24,6 +24,11 @@ class BatchCreateFromFrontendSerializer(serializers.Serializer):
             raise serializers.ValidationError("Insumo no encontrado.")
         return value
 
+    def validate_acquisitionCost(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("El costo de adquisición debe ser mayor a 0.")
+        return value
+
 class BatchReadSerializer(serializers.ModelSerializer):
     batch = serializers.CharField(source='lot_number')
     expirationDate = serializers.DateField(source='expiration_date')
@@ -94,14 +99,31 @@ class SupplyCreateSerializer(serializers.Serializer):
     min_stock = serializers.IntegerField(min_value=1, default=10)
     sku = serializers.CharField(max_length=50, required=False)
     initial_stock = serializers.IntegerField(min_value=0, required=False, default=0)
+    acquisitionCost = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
 
     def validate_sku(self, value):
         if value and Supply.objects.filter(sku=value).exists():
             raise serializers.ValidationError('Ya existe un insumo con este SKU.')
         return value
 
+    def validate_acquisitionCost(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("El costo de adquisición debe ser mayor a 0.")
+        return value
+
+    def validate(self, data):
+        initial_stock = data.get('initial_stock', 0)
+        acquisition_cost = data.get('acquisitionCost')
+        if initial_stock > 0:
+            if acquisition_cost is None or acquisition_cost <= 0:
+                raise serializers.ValidationError(
+                    {"acquisitionCost": "El costo de adquisición es requerido y debe ser mayor a 0 cuando el stock inicial es mayor a 0."}
+                )
+        return data
+
     def create(self, validated_data):
         initial_stock = validated_data.pop('initial_stock', 0)
+        acquisition_cost = validated_data.pop('acquisitionCost', None)
         if not validated_data.get('sku'):
             import uuid
             validated_data['sku'] = f"SKU-{str(uuid.uuid4())[:8].upper()}"
@@ -110,13 +132,15 @@ class SupplyCreateSerializer(serializers.Serializer):
         if initial_stock > 0:
             import datetime
             from decimal import Decimal
+            if acquisition_cost is None:
+                acquisition_cost = Decimal("10.00")
             SupplyBatch.objects.create(
                 supply=supply,
                 lot_number="LOTE-INICIAL",
                 expiration_date=datetime.date.today() + datetime.timedelta(days=365),
                 initial_stock=initial_stock,
                 current_stock=initial_stock,
-                acquisition_cost=Decimal("0.00")
+                acquisition_cost=acquisition_cost
             )
         return supply
 

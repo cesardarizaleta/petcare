@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   categoria: '',
   min_stock: '',
   stock_inicial: 0,
+  costo_inicial: '',
   observaciones: '',
 };
 
@@ -76,6 +77,7 @@ async function handleSubmit() {
   }
 
   const stockInicialVal = Number(form.value.stock_inicial);
+  let costoInicialVal = null;
   if (form.value.stock_inicial !== '' && form.value.stock_inicial !== null) {
     if (isNaN(stockInicialVal) || stockInicialVal < 0) {
       toastStore.push({
@@ -93,6 +95,18 @@ async function handleSubmit() {
       });
       return;
     }
+
+    if (stockInicialVal > 0) {
+      costoInicialVal = Number(form.value.costo_inicial);
+      if (form.value.costo_inicial === '' || form.value.costo_inicial === null || isNaN(costoInicialVal) || costoInicialVal <= 0) {
+        toastStore.push({
+          title: 'Error de validación',
+          description: 'El costo unitario inicial es requerido y debe ser mayor a 0 cuando el stock inicial es mayor a 0.',
+          type: 'error'
+        });
+        return;
+      }
+    }
   }
 
   loading.value = true;
@@ -102,7 +116,8 @@ async function handleSubmit() {
       category: form.value.categoria,
       description: form.value.observaciones || '',
       min_stock: Number(form.value.min_stock),
-      initial_stock: Number(form.value.stock_inicial) || 0,
+      initial_stock: stockInicialVal || 0,
+      acquisition_cost: costoInicialVal,
     });
 
     toastStore.push({
@@ -179,6 +194,20 @@ async function handleSubmit() {
             @keypress="preventNegative"
             @input="sanitizeStockInicial"
             @blur="sanitizeStockInicial"
+          />
+        </div>
+        <div class="field" v-if="form.stock_inicial > 0">
+          <label for="costo_inicial">Costo unitario inicial*</label>
+          <input
+            class="input"
+            id="costo_inicial"
+            v-model.number="form.costo_inicial"
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            placeholder="Ejemplo: 1.50"
+            @keypress="preventNegative"
           />
         </div>
         <div class="field">

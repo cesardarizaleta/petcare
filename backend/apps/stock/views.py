@@ -27,7 +27,9 @@ class SupplyBatchCreateView(APIView):
         acquisition_cost = validated.get('acquisitionCost')
         if not acquisition_cost:
             latest_batch = supply.batches.order_by('-created_at').first()
-            acquisition_cost = latest_batch.acquisition_cost if latest_batch else Decimal('0.00')
+            acquisition_cost = latest_batch.acquisition_cost if (latest_batch and latest_batch.acquisition_cost > 0) else Decimal('10.00')
+        elif acquisition_cost <= 0:
+            acquisition_cost = Decimal('10.00')
 
         batch = SupplyBatch.objects.create(
             supply=supply,

@@ -66,7 +66,10 @@ const sanitizeItemQuantity = (item) => {
 const getSupplyById = (id) =>
   listaInsumos.value.find((insumo) => String(insumo.id) === String(id));
 
-const getUnitCost = (supply) => (supply ? supply.unitCost ?? 0 : 0);
+const getUnitCost = (supply) => {
+  if (!supply) return 0;
+  return supply.unitCost && supply.unitCost > 0 ? supply.unitCost : 10.00;
+};
 
 const formatUnitCost = (value) =>
   formatMoney(value, { locale: 'en-US', currency: 'USD', maximumFractionDigits: 2 });
@@ -124,6 +127,19 @@ const gastoTotalPrevisto = computed(() =>
 
 const enviarAlGerente = async () => {
   if (itemsSolicitados.value.length === 0) return;
+
+  const hasZeroCost = itemsSolicitados.value.some(item => {
+    const supply = getSupplyById(item.insumoId);
+    return getUnitCost(supply) <= 0;
+  });
+  if (hasZeroCost) {
+    toastStore.push({
+      title: 'Error de validación',
+      description: 'No se pueden solicitar insumos con costo de 0.',
+      type: 'error',
+    });
+    return;
+  }
 
   const nuevaSolicitud = {
     id: `REQ-${Date.now()}`,

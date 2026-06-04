@@ -550,8 +550,9 @@ export const useAppStore = defineStore('app', {
         name: supplyData.name,
         category: supplyData.category || 'CONSUMABLE',
         description: supplyData.description || '',
-        min_stock: supplyData.min_stock || supplyData.min_stock || 10,
+        min_stock: supplyData.min_stock || 10,
         initial_stock: supplyData.initial_stock || 0,
+        acquisitionCost: supplyData.acquisition_cost || null,
       };
       const res = await http.post('/api/v1/inventory/supplies/', payload);
       const item = normalizeInventoryItem({
@@ -561,13 +562,13 @@ export const useAppStore = defineStore('app', {
       return item;
     },
 
-    async addBatch(supplyId, { batch, expirationDate, quantity }) {
+    async addBatch(supplyId, { batch, expirationDate, quantity, acquisitionCost }) {
       const payload = {
         insumoId: supplyId,
         quantity: Number(quantity),
         batch: batch,
         expirationDate: expirationDate,
-        acquisitionCost: "10.00"
+        acquisitionCost: acquisitionCost ? String(acquisitionCost) : "10.00"
       };
       
       await http.post('/api/v1/inventory/batches/', payload);

@@ -53,6 +53,18 @@ class BatchCreationTestCase(TestCase):
         response = self.client.post('/api/v1/inventory/batches/', data, format='json')
         self.assertEqual(response.status_code, http_status.HTTP_400_BAD_REQUEST)
 
+    def test_create_batch_fails_with_zero_or_negative_cost(self):
+        """Prueba que falle si el costo de adquisición es cero o negativo"""
+        data = {
+            "insumoId": str(self.supply.id), 
+            "quantity": 50, 
+            "batch": "LOT-ZERO-COST", 
+            "expirationDate": str(timezone.now().date() + datetime.timedelta(days=180)),
+            "acquisitionCost": "0.00"
+        }
+        response = self.client.post('/api/v1/inventory/batches/', data, format='json')
+        self.assertEqual(response.status_code, http_status.HTTP_400_BAD_REQUEST)
+
 
 class AlertsTestCase(TestCase):
     def setUp(self):
@@ -269,8 +281,34 @@ class SupplyCreationTestCase(TestCase):
             "category": "CONSUMABLE",
             "description": "Jeringas descartables de 5ml",
             "min_stock": 10,
-            "initial_stock": 30
+            "initial_stock": 30,
+            "acquisitionCost": "1.50"
         }
         response = self.client.post('/api/v1/inventory/supplies/', data, format='json')
         self.assertEqual(response.status_code, 201)
+
+    def test_create_supply_fails_with_missing_cost_when_initial_stock_positive(self):
+        data = {
+            "name": "Jeringa 5ml",
+            "category": "CONSUMABLE",
+            "description": "Jeringas descartables de 5ml",
+            "min_stock": 10,
+            "initial_stock": 30
+            # missing acquisitionCost
+        }
+        response = self.client.post('/api/v1/inventory/supplies/', data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("acquisitionCost", response.data)
+
+    def test_create_supply_fails_with_zero_cost_when_initial_stock_positive(self):
+        data = {
+            "name": "Jeringa 5ml",
+            "category": "CONSUMABLE",
+            "description": "Jeringas descartables de 5ml",
+            "min_stock": 10,
+            "initial_stock": 30,
+            "acquisitionCost": "0.00"
+        }
+        response = self.client.post('/api/v1/inventory/supplies/', data, format='json')
+        self.assertEqual(response.status_code, 400)
 
