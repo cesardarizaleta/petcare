@@ -20,7 +20,7 @@
   });
 
   async function handleRegister() {
-    if (!form.name || !form.email || !form.password) {
+    if (!form.name || !form.email || !form.password || !form.phone || !form.dni || !form.address) {
       toastStore.push({ title: 'Completa los campos requeridos', type: 'error' });
       return;
     }
@@ -83,17 +83,17 @@
 
       <form class="input-row" @submit.prevent="handleRegister">
         <label class="field">
-          <span>Nombre completo *</span>
+          <span>Nombre completo</span>
           <input v-model="form.name" class="input" type="text" placeholder="Ana García" />
         </label>
 
         <div class="input-grid">
           <label class="field">
-            <span>Correo electrónico *</span>
+            <span>Correo electrónico</span>
             <input v-model="form.email" class="input" type="email" placeholder="ana@email.com" />
           </label>
           <label class="field">
-            <span>Contraseña *</span>
+            <span>Contraseña</span>
             <input v-model="form.password" class="input" type="password" placeholder="••••••••" />
           </label>
         </div>

@@ -106,11 +106,11 @@ export const useAppStore = defineStore('app', {
         password: payload.password,
         first_name,
         last_name,
-        phone: payload.phone || '+541155554444',
-        address: payload.address || 'Av. Libertador 1420, CABA',
-        dni: payload.dni || String(30000000 + Math.floor(Math.random() * 9999999)),
+        phone: payload.phone || '',
+        address: payload.address || '',
+        dni: payload.dni || '',
         location: 'Sede Palermo',
-        emergency_contact: payload.phone || '+541155559999',
+        emergency_contact: payload.phone || '',
       };
       
       const res = await http.post('/api/v1/auth/register/', registerPayload);
