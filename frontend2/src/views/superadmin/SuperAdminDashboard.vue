@@ -11,6 +11,7 @@ const toastStore = useToastStore();
 const users = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
+const showModal = ref(false);
 
 // Form States
 const isEditing = ref(false);
@@ -73,6 +74,12 @@ const resetForm = () => {
   };
   isEditing.value = false;
   selectedUserId.value = null;
+  showModal.value = false;
+};
+
+const handleCreate = () => {
+  resetForm();
+  showModal.value = true;
 };
 
 const handleEdit = (user) => {
@@ -90,6 +97,7 @@ const handleEdit = (user) => {
     address: user.address || '',
     specialty: user.specialty || ''
   };
+  showModal.value = true;
 };
 
 const handleSubmit = async () => {
@@ -253,110 +261,123 @@ const getRoleLabel = (role) => {
       subtitle="Control central de usuarios, asignación de roles y estados de acceso."
     />
 
-    <div class="dashboard-grid">
-      <!-- Left Column: User Directory -->
-      <div class="left-col">
-        <DashboardCard title="Directorio de Usuarios" icon="users">
-          <div v-if="loading" class="loading-state">
-            <span class="spinner"></span>
-            <p>Cargando directorio de usuarios...</p>
-          </div>
-          
-          <div v-else class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Usuario / Email</th>
-                  <th>Nombre Completo</th>
-                  <th>Roles Asignados</th>
-                  <th>Contacto</th>
-                  <th>Especialidad</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="user in users" :key="user.id" class="table__row" :class="{ 'row--inactive': !user.is_active }">
-                  <td class="user-email-cell">
-                    <span class="user-email">{{ user.email }}</span>
-                  </td>
-                  <td>{{ user.first_name }} {{ user.last_name }}</td>
-                  <td>
-                    <div class="roles-container">
-                      <span
-                        v-for="role in user.roles"
-                        :key="role"
-                        class="role-badge"
-                        :class="getRoleBadgeClass(role)"
-                      >
-                        {{ getRoleLabel(role) }}
-                      </span>
-                      <span v-if="!user.roles || user.roles.length === 0" class="role-badge role-badge--none">
-                        Sin Rol
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="contact-details" v-if="user.dni || user.phone || user.address">
-                      <div v-if="user.dni" class="contact-item"><span class="label">DNI:</span> {{ user.dni }}</div>
-                      <div v-if="user.phone" class="contact-item"><span class="label">Tel:</span> {{ user.phone }}</div>
-                      <div v-if="user.address" class="contact-item contact-item--address" :title="user.address"><span class="label">Dir:</span> {{ user.address }}</div>
-                    </div>
-                    <span v-else class="text-muted text-xs">—</span>
-                  </td>
-                  <td>
-                    <span v-if="user.specialty" class="specialty-text">{{ user.specialty }}</span>
-                    <span v-else class="text-muted text-xs">—</span>
-                  </td>
-                  <td>
-                    <span class="status-indicator" :class="user.is_active ? 'status-indicator--active' : 'status-indicator--inactive'">
-                      <span class="status-dot"></span>
-                      {{ user.is_active ? 'Activo' : 'Inactivo' }}
+    <div class="directory-container">
+      <!-- User Directory Card takes full width -->
+      <DashboardCard
+        title="Directorio de Usuarios"
+        icon="users"
+        actionLabel="+ Registrar Usuario"
+        @action="handleCreate"
+      >
+        <div v-if="loading" class="loading-state">
+          <span class="spinner"></span>
+          <p>Cargando directorio de usuarios...</p>
+        </div>
+        
+        <div v-else class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Usuario / Email</th>
+                <th>Nombre Completo</th>
+                <th>Roles Asignados</th>
+                <th>Contacto</th>
+                <th>Especialidad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in users" :key="user.id" class="table__row" :class="{ 'row--inactive': !user.is_active }">
+                <td class="user-email-cell">
+                  <span class="user-email">{{ user.email }}</span>
+                </td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>
+                  <div class="roles-container">
+                    <span
+                      v-for="role in user.roles"
+                      :key="role"
+                      class="role-badge"
+                      :class="getRoleBadgeClass(role)"
+                    >
+                      {{ getRoleLabel(role) }}
                     </span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        class="btn btn--secondary btn--sm"
-                        title="Editar usuario"
-                        @click="handleEdit(user)"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        v-if="user.is_active"
-                        class="btn btn--danger btn--sm"
-                        title="Desactivar acceso"
-                        @click="handleDeactivate(user.id)"
-                      >
-                        Desactivar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <span v-if="!user.roles || user.roles.length === 0" class="role-badge role-badge--none">
+                      Sin Rol
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="contact-details" v-if="user.dni || user.phone || user.address">
+                    <div v-if="user.dni" class="contact-item"><span class="label">DNI:</span> {{ user.dni }}</div>
+                    <div v-if="user.phone" class="contact-item"><span class="label">Tel:</span> {{ user.phone }}</div>
+                    <div v-if="user.address" class="contact-item contact-item--address" :title="user.address"><span class="label">Dir:</span> {{ user.address }}</div>
+                  </div>
+                  <span v-else class="text-muted text-xs">—</span>
+                </td>
+                <td>
+                  <span v-if="user.specialty" class="specialty-text">{{ user.specialty }}</span>
+                  <span v-else class="text-muted text-xs">—</span>
+                </td>
+                <td>
+                  <span class="status-indicator" :class="user.is_active ? 'status-indicator--active' : 'status-indicator--inactive'">
+                    <span class="status-dot"></span>
+                    {{ user.is_active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      class="btn btn--secondary btn--sm"
+                      title="Editar usuario"
+                      @click="handleEdit(user)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      v-if="user.is_active"
+                      class="btn btn--danger btn--sm"
+                      title="Desactivar acceso"
+                      @click="handleDeactivate(user.id)"
+                    >
+                      Desactivar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </DashboardCard>
+    </div>
+
+    <!-- User Management Modal -->
+    <div v-if="showModal" class="modal-overlay" @click.self="resetForm">
+      <div class="modal-content animate-fade-scale">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            <AppIcon :name="isEditing ? 'user-round-pen' : 'user-round-plus'" :size="20" class="modal-title-icon" />
+            {{ isEditing ? 'Editar Usuario' : 'Registrar Nuevo Usuario' }}
+          </h3>
+          <button class="btn-close" type="button" @click="resetForm">&times;</button>
+        </div>
+
+        <form class="stack form-container modal-body" @submit.prevent="handleSubmit">
+          <div class="field">
+            <label for="email">Correo Electrónico*</label>
+            <input
+              id="email"
+              type="email"
+              class="input"
+              v-model="form.email"
+              required
+              :disabled="isEditing"
+              placeholder="usuario@petcare.com"
+            />
           </div>
-        </DashboardCard>
-      </div>
 
-      <!-- Right Column: User Management Form -->
-      <div class="right-col">
-        <DashboardCard :title="isEditing ? 'Editar Usuario' : 'Registrar Nuevo Usuario'" icon="user-round-plus">
-          <form class="stack form-container" @submit.prevent="handleSubmit">
-            <div class="field">
-              <label for="email">Correo Electrónico*</label>
-              <input
-                id="email"
-                type="email"
-                class="input"
-                v-model="form.email"
-                required
-                :disabled="isEditing"
-                placeholder="usuario@petcare.com"
-              />
-            </div>
-
+          <div class="grid-layout grid--2-cols">
             <div class="field">
               <label for="first_name">Nombre*</label>
               <input
@@ -380,21 +401,23 @@ const getRoleLabel = (role) => {
                 placeholder="Apellido"
               />
             </div>
+          </div>
 
-            <div class="field">
-              <label for="password">
-                {{ isEditing ? 'Nueva Contraseña (Dejar vacío para mantener)' : 'Contraseña*' }}
-              </label>
-              <input
-                id="password"
-                type="password"
-                class="input"
-                v-model="form.password"
-                :required="!isEditing"
-                placeholder="Contraseña"
-              />
-            </div>
+          <div class="field">
+            <label for="password">
+              {{ isEditing ? 'Nueva Contraseña (Dejar vacío para mantener)' : 'Contraseña*' }}
+            </label>
+            <input
+              id="password"
+              type="password"
+              class="input"
+              v-model="form.password"
+              :required="!isEditing"
+              placeholder="Contraseña"
+            />
+          </div>
 
+          <div class="grid-layout grid--2-cols">
             <div class="field">
               <label for="dni">DNI / Cédula</label>
               <input
@@ -402,7 +425,7 @@ const getRoleLabel = (role) => {
                 type="text"
                 class="input"
                 v-model="form.dni"
-                placeholder="Ej. 12345678 (6 a 10 dígitos)"
+                placeholder="Ej. 12345678"
               />
             </div>
 
@@ -416,74 +439,73 @@ const getRoleLabel = (role) => {
                 placeholder="Ej. +541155554444"
               />
             </div>
+          </div>
 
-            <div class="field">
-              <label for="address">Dirección</label>
-              <input
-                id="address"
-                type="text"
-                class="input"
-                v-model="form.address"
-                placeholder="Calle, Ciudad, Provincia"
-              />
-            </div>
+          <div class="field">
+            <label for="address">Dirección</label>
+            <input
+              id="address"
+              type="text"
+              class="input"
+              v-model="form.address"
+              placeholder="Calle, Ciudad, Provincia"
+            />
+          </div>
 
-            <div v-if="form.roles.includes('veterinarian')" class="field">
-              <label for="specialty">Especialidad Veterinaria</label>
-              <input
-                id="specialty"
-                type="text"
-                class="input"
-                v-model="form.specialty"
-                placeholder="Ej. Cirugía, Fisioterapia, etc."
-              />
-            </div>
+          <div v-if="form.roles.includes('veterinarian')" class="field">
+            <label for="specialty">Especialidad Veterinaria</label>
+            <input
+              id="specialty"
+              type="text"
+              class="input"
+              v-model="form.specialty"
+              placeholder="Ej. Cirugía, Fisioterapia, etc."
+            />
+          </div>
 
-            <div class="field">
-              <label>Roles de Usuario</label>
-              <div class="roles-checkboxes-grid">
-                <label v-for="opt in ROLE_OPTIONS" :key="opt.value" class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    :value="opt.value"
-                    v-model="form.roles"
-                    class="checkbox-input"
-                  />
-                  <span>{{ opt.label }}</span>
-                </label>
-              </div>
-            </div>
-
-            <div v-if="isEditing" class="field">
-              <label class="checkbox-label toggle-label">
+          <div class="field">
+            <label>Roles de Usuario</label>
+            <div class="roles-checkboxes-grid">
+              <label v-for="opt in ROLE_OPTIONS" :key="opt.value" class="checkbox-label">
                 <input
                   type="checkbox"
-                  v-model="form.is_active"
+                  :value="opt.value"
+                  v-model="form.roles"
                   class="checkbox-input"
                 />
-                <span>Usuario Activo (Permitir Ingreso)</span>
+                <span>{{ opt.label }}</span>
               </label>
             </div>
+          </div>
 
-            <div class="form-actions">
-              <button
-                v-if="isEditing"
-                type="button"
-                class="btn btn--secondary"
-                @click="resetForm"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                class="btn btn--primary"
-                :disabled="submitting"
-              >
-                {{ submitting ? 'Guardando...' : (isEditing ? 'Actualizar Usuario' : 'Registrar Usuario') }}
-              </button>
-            </div>
-          </form>
-        </DashboardCard>
+          <div v-if="isEditing" class="field">
+            <label class="checkbox-label toggle-label">
+              <input
+                type="checkbox"
+                v-model="form.is_active"
+                class="checkbox-input"
+              />
+              <span>Usuario Activo (Permitir Ingreso)</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn--secondary"
+              @click="resetForm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn--primary"
+              :disabled="submitting"
+            >
+              {{ submitting ? 'Guardando...' : (isEditing ? 'Actualizar Usuario' : 'Registrar Usuario') }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -497,11 +519,126 @@ const getRoleLabel = (role) => {
   gap: 1.5rem;
 }
 
-.dashboard-grid {
+.directory-container {
+  width: 100%;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+}
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(18, 18, 18, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-soft);
+}
+
+.modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.modal-title-icon {
+  color: var(--brand-strong);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.btn-close:hover {
+  color: var(--text-strong);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+/* Grid layout for modal fields */
+.grid-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  gap: 16px;
+}
+
+.grid--2-cols {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .grid--2-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Fade Scale Animation */
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-scale {
+  animation: fadeScale 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .loading-state {
@@ -650,11 +787,6 @@ const getRoleLabel = (role) => {
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 .contact-details {
   display: flex;
