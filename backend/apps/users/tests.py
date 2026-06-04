@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APITestCase
-from apps.users.models import NaturalPerson, AuditLog
+from apps.users.models import NaturalPerson, AuditLog, ClinicalStaff, Veterinarian
 from apps.owners.models import Owner
 
 User = get_user_model()
@@ -151,3 +151,167 @@ class UsersAuthTestCase(APITestCase):
     def test_verify_user_unauthenticated(self):
         response = self.client.get('/api/v1/auth/me/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class SuperAdminUserManagementTestCase(APITestCase):
+    def setUp(self):
+        # Crear grupos requeridos por el sistema
+        self.owner_group, _ = Group.objects.get_or_create(name='owner')
+        self.receptionist_group, _ = Group.objects.get_or_create(name='receptionist')
+        self.vet_group, _ = Group.objects.get_or_create(name='veterinarian')
+        self.manager_group, _ = Group.objects.get_or_create(name='manager')
+
+        # Crear superadmin
+        self.superadmin = User.objects.create_superuser(
+            email='superadmin@test.com',
+            password='Password123!',
+            first_name='Super',
+            last_name='Admin',
+            is_active=True
+        )
+
+        # Crear usuario normal
+        self.normal_user = User.objects.create_user(
+            email='normal@test.com',
+            password='Password123!',
+            first_name='Normal',
+            last_name='User',
+            is_active=True
+        )
+
+    def test_endpoint_permission_denied_for_normal_user(self):
+        self.client.force_authenticate(user=self.normal_user)
+        response = self.client.get('/api/v1/auth/superadmin/users/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_endpoint_allowed_for_superadmin(self):
+        self.client.force_authenticate(user=self.superadmin)
+        response = self.client.get('/api/v1/auth/superadmin/users/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_veterinarian_user_with_profiles(self):
+        self.client.force_authenticate(user=self.superadmin)
+        payload = {
+            'email': 'new_vet@test.com',
+            'password': 'Password123!',
+            'first_name': 'Luis',
+            'last_name': 'Paz',
+            'roles': ['veterinarian'],
+            'dni': '12345678',
+            'phone': '+541155553333',
+            'address': 'Palermo, CABA',
+            'specialty': 'Cirugía Felina'
+        }
+        response = self.client.post('/api/v1/auth/superadmin/users/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        user = User.objects.get(email='new_vet@test.com')
+        self.assertTrue(user.groups.filter(name='veterinarian').exists())
+
+        # Verify profiles are created
+        self.assertTrue(NaturalPerson.objects.filter(user=user).exists())
+        np = NaturalPerson.objects.get(user=user)
+        self.assertEqual(np.dni, '12345678')
+        self.assertEqual(np.phone, '+541155553333')
+        self.assertEqual(np.address, 'Palermo, CABA')
+
+        self.assertTrue(ClinicalStaff.objects.filter(user=user).exists())
+        cs = ClinicalStaff.objects.get(user=user)
+        self.assertEqual(cs.natural_person, np)
+
+        self.assertTrue(Veterinarian.objects.filter(clinical_staff=cs).exists())
+        vet = Veterinarian.objects.get(clinical_staff=cs)
+        self.assertEqual(vet.specialty, 'Cirugía Felina')
+
+    def test_create_owner_user_with_profiles(self):
+        self.client.force_authenticate(user=self.superadmin)
+        payload = {
+            'email': 'new_owner_super@test.com',
+            'password': 'Password123!',
+            'first_name': 'Carlos',
+            'last_name': 'Mendoza',
+            'roles': ['owner'],
+            'dni': '87654321',
+            'phone': '5551234',
+            'address': 'Centro, CABA'
+        }
+        response = self.client.post('/api/v1/auth/superadmin/users/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        user = User.objects.get(email='new_owner_super@test.com')
+        self.assertTrue(user.groups.filter(name='owner').exists())
+        self.assertTrue(NaturalPerson.objects.filter(user=user).exists())
+        self.assertTrue(Owner.objects.filter(user=user).exists())
+
+    def test_update_user_role_and_sync_profiles(self):
+        self.client.force_authenticate(user=self.superadmin)
+        
+        # Primero crear usuario como Propietario (Owner)
+        payload_create = {
+            'email': 'transition@test.com',
+            'password': 'Password123!',
+            'first_name': 'Transition',
+            'last_name': 'User',
+            'roles': ['owner'],
+            'dni': '99998888',
+            'phone': '1234567',
+            'address': 'Palermo'
+        }
+        response_create = self.client.post('/api/v1/auth/superadmin/users/', payload_create, format='json')
+        self.assertEqual(response_create.status_code, status.HTTP_201_CREATED)
+        user_id = response_create.data['id']
+
+        user = User.objects.get(id=user_id)
+        self.assertTrue(Owner.objects.filter(user=user).exists())
+        self.assertFalse(ClinicalStaff.objects.filter(user=user).exists())
+
+        # Actualizar a Veterinario
+        payload_update = {
+            'first_name': 'Transition',
+            'last_name': 'User',
+            'roles': ['veterinarian'],
+            'dni': '99998888',
+            'phone': '1234567',
+            'address': 'Palermo',
+            'specialty': 'Dermatología',
+            'is_active': True
+        }
+        response_update = self.client.put(f'/api/v1/auth/superadmin/users/{user_id}/', payload_update, format='json')
+        self.assertEqual(response_update.status_code, status.HTTP_200_OK)
+
+        # Verificar que Owner fue borrado y Veterinarian/ClinicalStaff fue creado
+        self.assertFalse(Owner.objects.filter(user=user).exists())
+        self.assertTrue(ClinicalStaff.objects.filter(user=user).exists())
+        cs = ClinicalStaff.objects.get(user=user)
+        self.assertTrue(Veterinarian.objects.filter(clinical_staff=cs).exists())
+        vet = Veterinarian.objects.get(clinical_staff=cs)
+        self.assertEqual(vet.specialty, 'Dermatología')
+
+    def test_validation_errors(self):
+        self.client.force_authenticate(user=self.superadmin)
+        
+        # Cédula con letras
+        payload_invalid_dni = {
+            'email': 'invalid_dni@test.com',
+            'password': 'Password123!',
+            'first_name': 'Invalid',
+            'last_name': 'Dni',
+            'roles': ['owner'],
+            'dni': '1234A567'
+        }
+        response = self.client.post('/api/v1/auth/superadmin/users/', payload_invalid_dni, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('La cédula/DNI debe contener', response.data['error'])
+
+        # Teléfono corto
+        payload_invalid_phone = {
+            'email': 'invalid_phone@test.com',
+            'password': 'Password123!',
+            'first_name': 'Invalid',
+            'last_name': 'Phone',
+            'roles': ['owner'],
+            'phone': '123'
+        }
+        response = self.client.post('/api/v1/auth/superadmin/users/', payload_invalid_phone, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('El teléfono debe tener un formato válido', response.data['error'])

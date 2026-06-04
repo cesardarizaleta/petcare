@@ -18,7 +18,7 @@ from apps.users.permissions import (
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework_simplejwt.tokens import RefreshToken
-from apps.users.models import NaturalPerson
+from apps.users.models import NaturalPerson, ClinicalStaff, Veterinarian
 from apps.owners.models import Owner
 
 User = get_user_model()
@@ -256,13 +256,40 @@ class SuperAdminUserViewSet(viewsets.ViewSet):
             groups = list(u.groups.values_list('name', flat=True))
             if u.is_superuser and 'superadmin' not in groups:
                 groups.append('superadmin')
+            
+            dni = ""
+            phone = ""
+            address = ""
+            if hasattr(u, 'natural_person'):
+                try:
+                    np = u.natural_person
+                    if np:
+                        dni = np.dni or ""
+                        phone = np.phone or ""
+                        address = np.address or ""
+                except Exception:
+                    pass
+
+            specialty = ""
+            if hasattr(u, 'clinical_staff'):
+                try:
+                    cs = u.clinical_staff
+                    if cs and hasattr(cs, 'veterinarian'):
+                        specialty = cs.veterinarian.specialty or ""
+                except Exception:
+                    pass
+
             users_data.append({
                 "id": str(u.id),
                 "email": u.email,
                 "first_name": u.first_name,
                 "last_name": u.last_name,
                 "is_active": u.is_active,
-                "roles": groups
+                "roles": groups,
+                "dni": dni,
+                "phone": phone,
+                "address": address,
+                "specialty": specialty
             })
         return Response(users_data)
 
@@ -274,11 +301,26 @@ class SuperAdminUserViewSet(viewsets.ViewSet):
         last_name = data.get('last_name', '')
         roles = data.get('roles', [])
 
+        dni = data.get('dni', '').strip() if data.get('dni') else ''
+        phone = data.get('phone', '').strip() if data.get('phone') else ''
+        address = data.get('address', '').strip() if data.get('address') else ''
+        specialty = data.get('specialty', '').strip() if data.get('specialty') else ''
+
         if not email or not password:
             return Response({'error': 'Email y contraseña son obligatorios.'}, status=400)
 
         if User.objects.filter(email=email).exists():
             return Response({'error': 'Este correo electrónico ya está registrado.'}, status=400)
+
+        if dni:
+            import re
+            if not re.match(r'^\d{6,10}$', str(dni)):
+                return Response({'error': 'La cédula/DNI debe contener entre 6 y 10 dígitos positivos.'}, status=400)
+        
+        if phone:
+            import re
+            if not re.match(r'^\+?[\d\s\-()]{7,20}$', str(phone)):
+                return Response({'error': 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).'}, status=400)
 
         try:
             user = User.objects.create(
@@ -299,6 +341,53 @@ class SuperAdminUserViewSet(viewsets.ViewSet):
                 else:
                     group, _ = Group.objects.get_or_create(name=role_name)
                     user.groups.add(group)
+
+            # Sync Profiles
+            natural_person, _ = NaturalPerson.objects.get_or_create(user=user)
+            natural_person.dni = dni
+            natural_person.phone = phone
+            natural_person.address = address
+            natural_person.save()
+
+            group_names = set(roles)
+            if 'owner' in group_names:
+                Owner.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'natural_person': natural_person,
+                        'location': 'Sede Palermo'
+                    }
+                )
+            else:
+                Owner.objects.filter(user=user).delete()
+
+            staff_roles = {'veterinarian', 'receptionist', 'manager', 'technician', 'veterinary_technician', 'superadmin'}
+            is_staff_role = bool(group_names & staff_roles) or user.is_staff or user.is_superuser
+            
+            if is_staff_role:
+                clinical_staff, _ = ClinicalStaff.objects.get_or_create(
+                    user=user,
+                    defaults={'natural_person': natural_person}
+                )
+                if not clinical_staff.natural_person:
+                    clinical_staff.natural_person = natural_person
+                    clinical_staff.save()
+
+                if 'veterinarian' in group_names:
+                    vet, _ = Veterinarian.objects.get_or_create(
+                        clinical_staff=clinical_staff,
+                        defaults={'specialty': specialty or 'General'}
+                    )
+                    if specialty:
+                        vet.specialty = specialty
+                        vet.save()
+                else:
+                    Veterinarian.objects.filter(clinical_staff=clinical_staff).delete()
+            else:
+                clinical_staff = ClinicalStaff.objects.filter(user=user).first()
+                if clinical_staff:
+                    Veterinarian.objects.filter(clinical_staff=clinical_staff).delete()
+                    clinical_staff.delete()
 
             return Response({
                 "id": str(user.id),
@@ -328,6 +417,21 @@ class SuperAdminUserViewSet(viewsets.ViewSet):
         
         user.save()
 
+        dni = data.get('dni')
+        phone = data.get('phone')
+        address = data.get('address')
+        specialty = data.get('specialty')
+
+        if dni:
+            import re
+            if not re.match(r'^\d{6,10}$', str(dni)):
+                return Response({'error': 'La cédula/DNI debe contener entre 6 y 10 dígitos positivos.'}, status=400)
+        
+        if phone:
+            import re
+            if not re.match(r'^\+?[\d\s\-()]{7,20}$', str(phone)):
+                return Response({'error': 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).'}, status=400)
+
         roles = data.get('roles')
         if roles is not None:
             user.groups.clear()
@@ -342,6 +446,59 @@ class SuperAdminUserViewSet(viewsets.ViewSet):
                     group, _ = Group.objects.get_or_create(name=role_name)
                     user.groups.add(group)
             user.save()
+
+        # Sync profiles
+        natural_person, _ = NaturalPerson.objects.get_or_create(user=user)
+        if dni is not None:
+            natural_person.dni = dni.strip()
+        if phone is not None:
+            natural_person.phone = phone.strip()
+        if address is not None:
+            natural_person.address = address.strip()
+        natural_person.save()
+
+        group_names = set(user.groups.values_list('name', flat=True))
+        if user.is_superuser:
+            group_names.add('superadmin')
+
+        if 'owner' in group_names:
+            Owner.objects.get_or_create(
+                user=user,
+                defaults={
+                    'natural_person': natural_person,
+                    'location': 'Sede Palermo'
+                }
+            )
+        else:
+            Owner.objects.filter(user=user).delete()
+
+        staff_roles = {'veterinarian', 'receptionist', 'manager', 'technician', 'veterinary_technician', 'superadmin'}
+        is_staff_role = bool(group_names & staff_roles) or user.is_staff or user.is_superuser
+        
+        if is_staff_role:
+            clinical_staff, _ = ClinicalStaff.objects.get_or_create(
+                user=user,
+                defaults={'natural_person': natural_person}
+            )
+            if not clinical_staff.natural_person:
+                clinical_staff.natural_person = natural_person
+                clinical_staff.save()
+
+            if 'veterinarian' in group_names:
+                vet, _ = Veterinarian.objects.get_or_create(
+                    clinical_staff=clinical_staff,
+                    defaults={'specialty': specialty or 'General'}
+                )
+                if specialty is not None:
+                    vet.specialty = specialty.strip() if specialty else 'General'
+                    vet.save()
+            else:
+                Veterinarian.objects.filter(clinical_staff=clinical_staff).delete()
+        else:
+            clinical_staff = ClinicalStaff.objects.filter(user=user).first()
+            if clinical_staff:
+                Veterinarian.objects.filter(clinical_staff=clinical_staff).delete()
+                clinical_staff.delete()
 
         groups = list(user.groups.values_list('name', flat=True))
         if user.is_superuser:

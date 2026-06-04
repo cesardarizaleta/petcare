@@ -21,7 +21,11 @@ const form = ref({
   last_name: '',
   password: '',
   roles: [],
-  is_active: true
+  is_active: true,
+  dni: '',
+  phone: '',
+  address: '',
+  specialty: ''
 });
 
 const ROLE_OPTIONS = [
@@ -61,7 +65,11 @@ const resetForm = () => {
     last_name: '',
     password: '',
     roles: [],
-    is_active: true
+    is_active: true,
+    dni: '',
+    phone: '',
+    address: '',
+    specialty: ''
   };
   isEditing.value = false;
   selectedUserId.value = null;
@@ -76,7 +84,11 @@ const handleEdit = (user) => {
     last_name: user.last_name,
     password: '', // Leave blank unless changing
     roles: [...user.roles],
-    is_active: user.is_active
+    is_active: user.is_active,
+    dni: user.dni || '',
+    phone: user.phone || '',
+    address: user.address || '',
+    specialty: user.specialty || ''
   };
 };
 
@@ -100,6 +112,32 @@ const handleSubmit = async () => {
     return;
   }
 
+  // DNI pattern validation (6-10 digits) if provided
+  if (form.value.dni) {
+    const dniStr = String(form.value.dni).trim();
+    if (!/^\d{6,10}$/.test(dniStr)) {
+      toastStore.push({
+        title: 'Formato de DNI inválido',
+        description: 'La cédula/DNI debe contener entre 6 y 10 dígitos positivos.',
+        type: 'error'
+      });
+      return;
+    }
+  }
+
+  // Phone pattern validation if provided
+  if (form.value.phone) {
+    const phoneStr = String(form.value.phone).trim();
+    if (!/^\+?[\d\s\-()]{7,20}$/.test(phoneStr)) {
+      toastStore.push({
+        title: 'Formato de teléfono inválido',
+        description: 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres).',
+        type: 'error'
+      });
+      return;
+    }
+  }
+
   submitting.value = true;
   try {
     if (isEditing.value) {
@@ -108,7 +146,11 @@ const handleSubmit = async () => {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         roles: form.value.roles,
-        is_active: form.value.is_active
+        is_active: form.value.is_active,
+        dni: form.value.dni,
+        phone: form.value.phone,
+        address: form.value.address,
+        specialty: form.value.roles.includes('veterinarian') ? form.value.specialty : ''
       };
       if (form.value.password) {
         payload.password = form.value.password;
@@ -126,7 +168,11 @@ const handleSubmit = async () => {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         password: form.value.password,
-        roles: form.value.roles
+        roles: form.value.roles,
+        dni: form.value.dni,
+        phone: form.value.phone,
+        address: form.value.address,
+        specialty: form.value.roles.includes('veterinarian') ? form.value.specialty : ''
       };
       await http.post('/api/v1/auth/superadmin/users/', payload);
       toastStore.push({
@@ -223,6 +269,8 @@ const getRoleLabel = (role) => {
                   <th>Usuario / Email</th>
                   <th>Nombre Completo</th>
                   <th>Roles Asignados</th>
+                  <th>Contacto</th>
+                  <th>Especialidad</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -247,6 +295,18 @@ const getRoleLabel = (role) => {
                         Sin Rol
                       </span>
                     </div>
+                  </td>
+                  <td>
+                    <div class="contact-details" v-if="user.dni || user.phone || user.address">
+                      <div v-if="user.dni" class="contact-item"><span class="label">DNI:</span> {{ user.dni }}</div>
+                      <div v-if="user.phone" class="contact-item"><span class="label">Tel:</span> {{ user.phone }}</div>
+                      <div v-if="user.address" class="contact-item contact-item--address" :title="user.address"><span class="label">Dir:</span> {{ user.address }}</div>
+                    </div>
+                    <span v-else class="text-muted text-xs">—</span>
+                  </td>
+                  <td>
+                    <span v-if="user.specialty" class="specialty-text">{{ user.specialty }}</span>
+                    <span v-else class="text-muted text-xs">—</span>
                   </td>
                   <td>
                     <span class="status-indicator" :class="user.is_active ? 'status-indicator--active' : 'status-indicator--inactive'">
@@ -332,6 +392,50 @@ const getRoleLabel = (role) => {
                 v-model="form.password"
                 :required="!isEditing"
                 placeholder="Contraseña"
+              />
+            </div>
+
+            <div class="field">
+              <label for="dni">DNI / Cédula</label>
+              <input
+                id="dni"
+                type="text"
+                class="input"
+                v-model="form.dni"
+                placeholder="Ej. 12345678 (6 a 10 dígitos)"
+              />
+            </div>
+
+            <div class="field">
+              <label for="phone">Teléfono</label>
+              <input
+                id="phone"
+                type="tel"
+                class="input"
+                v-model="form.phone"
+                placeholder="Ej. +541155554444"
+              />
+            </div>
+
+            <div class="field">
+              <label for="address">Dirección</label>
+              <input
+                id="address"
+                type="text"
+                class="input"
+                v-model="form.address"
+                placeholder="Calle, Ciudad, Provincia"
+              />
+            </div>
+
+            <div v-if="form.roles.includes('veterinarian')" class="field">
+              <label for="specialty">Especialidad Veterinaria</label>
+              <input
+                id="specialty"
+                type="text"
+                class="input"
+                v-model="form.specialty"
+                placeholder="Ej. Cirugía, Fisioterapia, etc."
               />
             </div>
 
@@ -550,5 +654,43 @@ const getRoleLabel = (role) => {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.775rem;
+  color: var(--text-normal);
+}
+
+.contact-item {
+  white-space: nowrap;
+}
+
+.contact-item--address {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.contact-item .label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.specialty-text {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--brand-strong);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-xs {
+  font-size: 0.75rem;
 }
 </style>
