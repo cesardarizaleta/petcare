@@ -16,6 +16,11 @@ export const speciesMeta = {
   other: { label: 'Otro', icon: 'paw-print', className: 'chip--brand' },
 };
 
+export function getSpeciesLabel(codename) {
+  const species = speciesMeta[codename];
+  return species && species.label || 'Otro';
+}
+
 export function formatDate(value, locale = 'es-AR') {
   if (!value) return '—';
   return new Intl.DateTimeFormat(locale, {

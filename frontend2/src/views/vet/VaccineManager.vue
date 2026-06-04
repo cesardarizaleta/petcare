@@ -4,7 +4,7 @@
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
   import { useConfirmStore } from '@/stores/useConfirmStore';
-  import { formatDate, todayISO } from '@/lib/petcare';
+  import { formatDate, todayISO, getSpeciesLabel } from '@/lib/petcare';
   import http from '@/lib/http';
 
   const appStore = useAppStore();
@@ -166,7 +166,7 @@
             <select v-model="form.petId" class="select" @change="loadVaccineHistory">
               <option value="" disabled>Seleccione un paciente...</option>
               <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
-                {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
+                {{ pet.name }} · {{ pet.breed }} ({{ getSpeciesLabel(pet.species) }} - {{ pet.color }})
               </option>
             </select>
           </label>

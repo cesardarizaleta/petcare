@@ -4,7 +4,7 @@
   import DashboardCard from '@/components/shared/DashboardCard.vue';
   import StatusBadge from '@/components/shared/StatusBadge.vue';
   import { useAppStore } from '@/stores/useAppStore';
-  import { formatDate } from '@/lib/petcare';
+  import { formatDate, getSpeciesLabel } from '@/lib/petcare';
 
   const appStore = useAppStore();
 
@@ -91,7 +91,7 @@
           <select v-model="petIdInput" class="select" required>
             <option value="" disabled>Seleccione un paciente...</option>
             <option v-for="pet in appStore.pets" :key="pet.id" :value="pet.id">
-              {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
+              {{ pet.name }} · {{ pet.breed }} ({{ getSpeciesLabel(pet.species) }} - {{ pet.color }})
             </option>
           </select>
         </label>

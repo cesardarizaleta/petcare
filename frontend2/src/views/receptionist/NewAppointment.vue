@@ -4,7 +4,7 @@
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
-  import { todayISO, extractApiError } from '@/lib/petcare';
+  import { todayISO, extractApiError, getSpeciesLabel } from '@/lib/petcare';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
@@ -190,7 +190,7 @@
             <select v-model="form.patientId" class="select" required>
               <option value="" disabled>Seleccione una mascota...</option>
               <option v-for="pet in filteredPets" :key="pet.id" :value="pet.id">
-                {{ pet.name }} · {{ pet.breed }} ({{ pet.species === 'dog' ? 'Perro' : pet.species === 'cat' ? 'Gato' : pet.species }} - {{ pet.color }})
+                {{ pet.name }} · {{ pet.breed }} ({{ getSpeciesLabel(pet.species) }} - {{ pet.color }})
               </option>
             </select>
           </label>
