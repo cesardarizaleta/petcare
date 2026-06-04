@@ -10,12 +10,19 @@
     (burbujas emergentes) sin importar en qué vista estemos.
   -->
   <ToastHost />
+
+  <!--
+    ConfirmHost se encarga de mostrar los modales de confirmación interactivos
+    de forma global.
+  -->
+  <ConfirmHost />
 </template>
 
 <script setup>
   import { onMounted } from 'vue';
   import { RouterView } from 'vue-router';
   import ToastHost from '@/components/ui/ToastHost.vue';
+  import ConfirmHost from '@/components/ui/ConfirmHost.vue';
   import { useAppStore } from '@/stores/useAppStore';
 
   onMounted(() => {

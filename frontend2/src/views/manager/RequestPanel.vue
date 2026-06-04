@@ -2,12 +2,14 @@
 import { computed, onMounted, ref } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import { useToastStore } from '@/stores/useToastStore';
+import { useConfirmStore } from '@/stores/useConfirmStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
 const toastStore = useToastStore();
+const confirmStore = useConfirmStore();
 const processingId = ref('');
 
 onMounted(async () => {
@@ -41,9 +43,23 @@ const obtenerNombreInsumo = (insumoId) => {
 
 // 2. Funcionalidad: Modificar estado en Pinia via API
 const procesarSolicitud = async (id, nuevoEstado) => {
+  const esAprobacion = nuevoEstado === 'Aprobada';
+  
+  const isConfirmed = await confirmStore.confirm({
+    title: esAprobacion ? 'Aprobar Solicitud' : 'Rechazar Solicitud',
+    message: esAprobacion 
+      ? `¿Estás seguro de que deseas aprobar la solicitud de reabastecimiento #${id}? Esto incrementará el stock disponible en el inventario.`
+      : `¿Estás seguro de que deseas rechazar la solicitud de reabastecimiento #${id}? Esta acción no se puede revertir.`,
+    confirmText: esAprobacion ? 'Sí, aprobar' : 'Sí, rechazar',
+    cancelText: 'Cancelar',
+    type: esAprobacion ? 'success' : 'danger',
+  });
+
+  if (!isConfirmed) return;
+
   processingId.value = id;
   try {
-    if (nuevoEstado === 'Aprobada') {
+    if (esAprobacion) {
       await appStore.approveRequisition(id);
     } else {
       await appStore.cancelRequisition(id, 'Rechazada por Gerencia');

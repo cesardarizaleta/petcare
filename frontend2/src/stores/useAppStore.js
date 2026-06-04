@@ -260,6 +260,29 @@ export const useAppStore = defineStore('app', {
       return mappedOwner;
     },
 
+    async createOwner(payload) {
+      const nameParts = payload.name.trim().split(' ');
+      const first_name = nameParts[0] || 'Nuevo';
+      const last_name = nameParts.slice(1).join(' ') || '';
+      
+      const registerPayload = {
+        email: payload.email,
+        password: payload.password,
+        first_name,
+        last_name,
+        phone: payload.phone || '',
+        address: payload.address || '',
+        dni: payload.dni || '',
+        location: 'Sede Palermo',
+        emergency_contact: payload.phone || '',
+      };
+      
+      const res = await http.post('/api/v1/auth/register/', registerPayload);
+      // Re-fetch owners so list includes the new owner
+      await this.fetchOwners();
+      return res.data;
+    },
+
     async fetchPets() {
       const endpoint = this.role === 'owner' ? '/api/v1/owners/me/pets/' : '/api/v1/pets/';
       const res = await http.get(endpoint);
@@ -564,7 +587,10 @@ export const useAppStore = defineStore('app', {
                 order.status === 'APPROVED' ? 'Aprobada' : 
                 order.status === 'RECEIVED' ? 'Recibida' : 'Rechazada',
         items: order.items.map(item => ({
+          id: item.id,
           insumoId: item.supply,
+          supplyName: item.supply_name || 'Insumo',
+          supplySku: item.supply_sku || '',
           quantity: item.quantity_requested
         }))
       }));
@@ -594,6 +620,23 @@ export const useAppStore = defineStore('app', {
     async approveRequisition(orderId) {
       await http.post(`/api/v1/inventory/purchase-orders/${orderId}/approve/`);
       await this.fetchRequisitions();
+      return true;
+    },
+
+    async receiveRequisition(orderId, receivedItems) {
+      const payload = {
+        received_items: receivedItems.map(item => ({
+          item_id: item.itemId,
+          lot_number: item.lotNumber,
+          expiration_date: item.expirationDate,
+          quantity_received: Number(item.quantityReceived)
+        }))
+      };
+      await http.post(`/api/v1/inventory/purchase-orders/${orderId}/receive/`, payload);
+      await Promise.all([
+        this.fetchInventory(),
+        this.fetchRequisitions()
+      ]);
       return true;
     },
 

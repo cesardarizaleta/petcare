@@ -5,7 +5,7 @@ export const statusMeta = {
   completed: { label: 'Completada', className: 'chip--sage' },
   cancelled: { label: 'Cancelada', className: 'chip--danger' },
   waiting: { label: 'En Espera', className: 'chip--cream' },
-  checked_in: { label: 'En Sala', className: 'chip--cream' },
+  checked_in: { label: 'Chequeada', className: 'chip--cream' },
 };
 
 export const speciesMeta = {

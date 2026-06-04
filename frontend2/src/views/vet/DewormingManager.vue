@@ -1,31 +1,41 @@
 <script setup>
-  import { reactive, ref, onMounted } from 'vue';
+  import { reactive, ref, onMounted, computed } from 'vue';
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
+  import { useConfirmStore } from '@/stores/useConfirmStore';
   import { formatDate, todayISO, extractApiError } from '@/lib/petcare';
+  import http from '@/lib/http';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const confirmStore = useConfirmStore();
   const loading = ref(false);
   const dewormingHistory = ref([]);
+  const selectedSupplyId = ref('');
 
   onMounted(async () => {
     try {
-      await appStore.fetchAppointmentsToday();
-      await appStore.fetchPets();
+      await Promise.all([
+        appStore.fetchAppointmentsToday(),
+        appStore.fetchPets(),
+        appStore.fetchInventory()
+      ]);
     } catch (err) {
-      console.error('Error fetching today appointments/pets in DewormingManager:', err);
+      console.error('Error fetching today appointments/pets/inventory in DewormingManager:', err);
     }
   });
 
   const form = reactive({
     petId: '',
-    product: '',
     date: todayISO(),
     nextDate: '',
     weight: '',
     notes: '',
+  });
+
+  const dewormingSupplies = computed(() => {
+    return appStore.inventory.filter(item => item.category === 'MEDICINE');
   });
 
   async function loadHistory() {
@@ -40,8 +50,23 @@
   }
 
   async function saveDeworming() {
-    if (!form.petId || !form.product || !form.date) {
+    if (!form.petId || !selectedSupplyId.value || !form.date) {
       toastStore.push({ title: 'Completa los campos requeridos', type: 'error' });
+      return;
+    }
+
+    const supply = appStore.inventory.find(s => s.id === selectedSupplyId.value);
+    if (!supply) {
+      toastStore.push({ title: 'Insumo no encontrado', type: 'error' });
+      return;
+    }
+
+    if (supply.quantity < 1) {
+      toastStore.push({
+        title: 'Stock insuficiente',
+        description: `No hay unidades disponibles de ${supply.name} en el inventario para aplicar.`,
+        type: 'error'
+      });
       return;
     }
 
@@ -69,25 +94,49 @@
       return;
     }
 
+    const selectedPet = appStore.pets.find(p => p.id === form.petId);
+    const petName = selectedPet ? selectedPet.name : 'el paciente';
+    const autoBatch = supply.batches[0]?.batch || 'AUTO';
+
+    const isConfirmed = await confirmStore.confirm({
+      title: 'Registrar Desparasitación',
+      message: `¿Estás seguro de que deseas registrar la desparasitación con ${supply.name} para ${petName}? Se descontará 1 unidad del stock de inventario.`,
+      confirmText: 'Registrar y Descontar',
+      cancelText: 'Cancelar',
+      type: 'info',
+    });
+
+    if (!isConfirmed) return;
+
     loading.value = true;
     try {
+      // 1. Guardar el registro de vacunación/desparasitación
       await appStore.registerVaccinationEvent(form.petId, {
-        vaccine_name: form.product,
+        vaccine_name: supply.name,
         dose: form.weight ? `${form.weight} kg` : '1 dosis',
         applied_date: form.date,
         next_due_date: form.nextDate || null,
-        sanitary_batch: form.notes || '',
+        sanitary_batch: autoBatch,
         event_type: 'DEWORMING',
       });
 
+      // 2. Consumir de inventario
+      await http.post('/api/v1/inventory/consume/', {
+        supply_id: supply.id,
+        quantity: 1
+      });
+
+      // 3. Recargar inventario para actualizar niveles
+      await appStore.fetchInventory();
+
       toastStore.push({
-        title: 'Desparasitación guardada',
-        description: 'El registro fue guardado en la base de datos.',
+        title: 'Desparasitación registrada y descontada',
+        description: `Se registró la aplicación de ${supply.name} y se descontó 1 unidad del stock.`,
         type: 'success',
       });
 
       await loadHistory();
-      form.product = '';
+      selectedSupplyId.value = '';
       form.weight = '';
       form.notes = '';
     } catch (error) {
@@ -118,27 +167,34 @@
               </option>
             </select>
           </label>
-          <label class="field"
-            ><span>Producto *</span
-            ><input v-model="form.product" class="input" type="text" placeholder="Milbemax"
-          /></label>
+          
           <div class="input-grid">
-            <label class="field"
-              ><span>Fecha *</span><input v-model="form.date" class="input" type="date"
-            /></label>
-            <label class="field"
-              ><span>Próxima fecha</span><input v-model="form.nextDate" class="input" type="date"
-            /></label>
+            <label class="field">
+              <span>Seleccionar Desparasitante *</span>
+              <select v-model="selectedSupplyId" class="select">
+                <option value="" disabled>Seleccione un producto...</option>
+                <option v-for="item in dewormingSupplies" :key="item.id" :value="item.id" :disabled="item.quantity < 1">
+                  {{ item.name }} (Stock: {{ item.quantity }} uds.)
+                </option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Peso (kg)</span>
+              <input v-model="form.weight" class="input" type="number" min="0" step="0.1" />
+            </label>
           </div>
+
           <div class="input-grid">
-            <label class="field"
-              ><span>Peso (kg)</span
-              ><input v-model="form.weight" class="input" type="number" min="0" step="0.1"
-            /></label>
-            <label class="field"
-              ><span>Notas</span><input v-model="form.notes" class="input" type="text"
-            /></label>
+            <label class="field">
+              <span>Fecha *</span>
+              <input v-model="form.date" class="input" type="date" />
+            </label>
+            <label class="field">
+              <span>Próxima fecha</span>
+              <input v-model="form.nextDate" class="input" type="date" />
+            </label>
           </div>
+
           <button class="btn btn--primary" type="button" :disabled="loading" @click="saveDeworming">
             {{ loading ? 'Guardando...' : 'Guardar desparasitación' }}
           </button>
@@ -152,7 +208,7 @@
               <th>Producto</th>
               <th>Fecha</th>
               <th>Próxima</th>
-              <th>Dosis</th>
+              <th>Lote</th>
             </tr>
           </thead>
           <tbody>
@@ -160,7 +216,7 @@
               <td>{{ item.vaccine_name || item.event_type }}</td>
               <td>{{ formatDate(item.applied_date) }}</td>
               <td>{{ item.next_due_date ? formatDate(item.next_due_date) : '—' }}</td>
-              <td>{{ item.dose || '—' }}</td>
+              <td>{{ item.lot || item.sanitary_batch || '—' }}</td>
             </tr>
             <tr v-if="!dewormingHistory.length">
               <td colspan="4" class="muted">Ingrese un ID de paciente y cargue el historial.</td>

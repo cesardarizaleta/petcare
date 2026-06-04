@@ -4,9 +4,11 @@
   import PageHeader from '@/components/shared/PageHeader.vue';
   import { useAppStore } from '@/stores/useAppStore';
   import { useToastStore } from '@/stores/useToastStore';
+  import { useConfirmStore } from '@/stores/useConfirmStore';
 
   const appStore = useAppStore();
   const toastStore = useToastStore();
+  const confirmStore = useConfirmStore();
   const router = useRouter();
   const loading = ref(false);
 
@@ -62,6 +64,16 @@
         return;
       }
     }
+
+    const isConfirmed = await confirmStore.confirm({
+      title: 'Guardar Consulta',
+      message: '¿Estás seguro de que deseas guardar esta consulta clínica? Se registrarán el diagnóstico y el tratamiento de forma permanente.',
+      confirmText: 'Sí, guardar consulta',
+      cancelText: 'Cancelar',
+      type: 'success',
+    });
+
+    if (!isConfirmed) return;
 
     loading.value = true;
     try {

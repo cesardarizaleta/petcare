@@ -1,11 +1,14 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAppStore } from '@/stores/useAppStore';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { formatMoney } from '@/lib/petcare';
 
 const appStore = useAppStore();
+
+const itemsPerPage = 5;
+const currentPage = ref(1);
 
 onMounted(async () => {
   try {
@@ -24,6 +27,17 @@ const filtroEstado = ref('Todos');
 const solicitudesFiltradas = computed(() => {
   if (filtroEstado.value === 'Todos') return solicitudes.value;
   return solicitudes.value.filter((s) => s.estado === filtroEstado.value);
+});
+
+const totalPages = computed(() => Math.ceil(solicitudesFiltradas.value.length / itemsPerPage));
+
+const paginatedSolicitudes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return solicitudesFiltradas.value.slice(start, start + itemsPerPage);
+});
+
+watch([filtroEstado, solicitudes], () => {
+  currentPage.value = 1;
 });
 
 const formatTotal = (value) =>
@@ -79,7 +93,7 @@ const getBadgeClass = (estado) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="solicitud in solicitudesFiltradas" :key="solicitud.id" class="table__row">
+            <tr v-for="solicitud in paginatedSolicitudes" :key="solicitud.id" class="table__row">
               <td class="col-id">
                 <span class="uuid-tag" :title="solicitud.id">{{ formatShortId(solicitud.id) }}</span>
               </td>
@@ -107,6 +121,29 @@ const getBadgeClass = (estado) => {
             </tr>
           </tbody>
         </table>
+
+        <!-- Controles de Paginación -->
+        <div class="pagination-controls" v-if="totalPages > 1">
+          <button
+            class="btn btn--soft btn--sm"
+            type="button"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+          >
+            &larr; Anterior
+          </button>
+          <span class="pagination-info">
+            Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong>
+          </span>
+          <button
+            class="btn btn--soft btn--sm"
+            type="button"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+          >
+            Siguiente &rarr;
+          </button>
+        </div>
       </section>
 
       <p v-else class="empty-state">
@@ -321,5 +358,26 @@ const getBadgeClass = (estado) => {
   .filter-select {
     max-width: 100%;
   }
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
 }
 </style>

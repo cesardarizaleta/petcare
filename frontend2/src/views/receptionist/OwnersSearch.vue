@@ -15,6 +15,7 @@
   const selectedOwnerId = ref('');
   const query = ref('');
   const isEditing = ref(false);
+  const isRegistering = ref(false);
   const saving = ref(false);
 
   const editForm = reactive({
@@ -22,6 +23,15 @@
     dni: '',
     phone: '',
     address: '',
+  });
+
+  const registerForm = reactive({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    address: '',
+    dni: '',
   });
 
   onMounted(async () => {
@@ -67,6 +77,7 @@
   function selectOwner(owner) {
     selectedOwnerId.value = owner.id;
     isEditing.value = false;
+    isRegistering.value = false;
   }
 
   function startEdit() {
@@ -76,9 +87,21 @@
     editForm.phone = selectedOwner.value.phone || '';
     editForm.address = selectedOwner.value.address || '';
     isEditing.value = true;
+    isRegistering.value = false;
   }
 
   function cancelEdit() {
+    isEditing.value = false;
+  }
+
+  function startRegistration() {
+    registerForm.name = '';
+    registerForm.email = '';
+    registerForm.password = 'Petcare' + Math.floor(100 + Math.random() * 900) + '!';
+    registerForm.phone = '';
+    registerForm.address = '';
+    registerForm.dni = '';
+    isRegistering.value = true;
     isEditing.value = false;
   }
 
@@ -125,6 +148,67 @@
       saving.value = false;
     }
   }
+
+  async function handleRegisterOwner() {
+    if (!registerForm.name.trim()) {
+      toastStore.push({ title: 'El nombre es obligatorio.', type: 'error' });
+      return;
+    }
+    if (!registerForm.email.trim()) {
+      toastStore.push({ title: 'El correo electrónico es obligatorio.', type: 'error' });
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(registerForm.email)) {
+      toastStore.push({ title: 'Formato de correo electrónico inválido.', type: 'error' });
+      return;
+    }
+    if (!registerForm.password.trim()) {
+      toastStore.push({ title: 'La contraseña es obligatoria.', type: 'error' });
+      return;
+    }
+
+    if (registerForm.dni && !/^[0-9]{6,10}$/.test(registerForm.dni)) {
+      toastStore.push({
+        title: 'Cédula / DNI inválido',
+        description: 'La cédula debe contener entre 6 y 10 dígitos numéricos positivos.',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (registerForm.phone && !/^\+?[\d\s\-()]{7,20}$/.test(registerForm.phone)) {
+      toastStore.push({
+        title: 'Teléfono inválido',
+        description: 'El teléfono debe tener un formato válido (entre 7 y 20 caracteres, permitiendo números, espacios, guiones y paréntesis).',
+        type: 'error'
+      });
+      return;
+    }
+
+    saving.value = true;
+    try {
+      await appStore.createOwner(registerForm);
+      toastStore.push({
+        title: 'Propietario registrado',
+        description: 'El nuevo propietario fue creado con éxito.',
+        type: 'success',
+      });
+      
+      const newOwner = appStore.owners.find(o => o.email.toLowerCase() === registerForm.email.toLowerCase());
+      if (newOwner) {
+        selectedOwnerId.value = newOwner.id;
+      }
+      isRegistering.value = false;
+    } catch (err) {
+      toastStore.push({
+        title: 'Error al registrar propietario',
+        description: extractApiError(err),
+        type: 'error',
+      });
+    } finally {
+      saving.value = false;
+    }
+  }
 </script>
 
 <template>
@@ -134,14 +218,20 @@
       subtitle="Búsqueda, consulta cruzada y edición de datos de dueños."
     />
 
-    <section class="input-row">
-      <input
-        v-model="query"
-        class="input"
-        type="search"
-        placeholder="Buscar por nombre, correo, teléfono o dirección..."
-      />
-    </section>
+    <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 250px;">
+        <input
+          v-model="query"
+          class="input"
+          type="search"
+          placeholder="Buscar por nombre, correo, teléfono o dirección..."
+          style="width: 100%;"
+        />
+      </div>
+      <button class="btn btn--primary" type="button" @click="startRegistration">
+        Nuevo Propietario
+      </button>
+    </div>
 
     <section class="split">
       <div class="card">
@@ -150,7 +240,7 @@
             v-for="owner in filteredOwners"
             :key="owner.id"
             class="list__item list__item--clickable"
-            :class="{ 'list__item--active': selectedOwner && selectedOwner.id === owner.id }"
+            :class="{ 'list__item--active': selectedOwner && selectedOwner.id === owner.id && !isRegistering }"
             @click="selectOwner(owner)"
           >
             <div class="list__item-main">
@@ -167,9 +257,58 @@
         </div>
       </div>
 
-      <div class="card" v-if="selectedOwner">
+      <div class="card" v-if="selectedOwner || isRegistering">
+        <!-- MODO REGISTRO -->
+        <div v-if="isRegistering" class="stack">
+          <h2 class="section__title">Registrar Propietario</h2>
+          <p class="muted" style="margin-bottom: 18px;">Ingresa los datos para crear una nueva cuenta de propietario.</p>
+
+          <form @submit.prevent="handleRegisterOwner" class="input-row">
+            <label class="field">
+              <span>Nombre y Apellido *</span>
+              <input v-model="registerForm.name" class="input" type="text" required placeholder="Nombre completo" />
+            </label>
+
+            <div class="input-grid">
+              <label class="field">
+                <span>Correo Electrónico *</span>
+                <input v-model="registerForm.email" class="input" type="email" required placeholder="correo@ejemplo.com" />
+              </label>
+              <label class="field">
+                <span>Contraseña *</span>
+                <input v-model="registerForm.password" class="input" type="text" required placeholder="Contraseña de acceso" />
+              </label>
+            </div>
+
+            <div class="input-grid">
+              <label class="field">
+                <span>DNI / Cédula</span>
+                <input v-model="registerForm.dni" class="input" type="text" placeholder="Ej: 12345678" />
+              </label>
+              <label class="field">
+                <span>Teléfono</span>
+                <input v-model="registerForm.phone" class="input" type="tel" placeholder="Número telefónico" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Dirección</span>
+              <textarea v-model="registerForm.address" class="textarea" rows="3" placeholder="Dirección de residencia"></textarea>
+            </label>
+
+            <div class="toolbar" style="justify-content: flex-end; gap: 12px; margin-top: 14px; display: flex; flex-wrap: wrap;">
+              <button class="btn btn--ghost" type="button" @click="isRegistering = false" :disabled="saving">
+                Cancelar
+              </button>
+              <button class="btn btn--primary" type="submit" :disabled="saving">
+                {{ saving ? 'Registrando...' : 'Registrar Propietario' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- DETALLES VISTA DE LECTURA -->
-        <div v-if="!isEditing" class="stack">
+        <div v-else-if="!isEditing && selectedOwner" class="stack">
           <div class="toolbar-header">
             <div>
               <h2 class="section__title" style="margin: 0;">{{ selectedOwner.name }}</h2>
@@ -246,7 +385,7 @@
         </div>
 
         <!-- MODO DE EDICIÓN -->
-        <div v-else class="stack">
+        <div v-else-if="isEditing && selectedOwner" class="stack">
           <h2 class="section__title">Editar Propietario</h2>
           <p class="muted" style="margin-bottom: 18px;">Modifica los campos del propietario y guarda los cambios.</p>
 

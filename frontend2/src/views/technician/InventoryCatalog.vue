@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import PageHeader from '@/components/shared/PageHeader.vue';
 import DashboardCard from '@/components/shared/DashboardCard.vue';
 import { useAppStore } from '@/stores/useAppStore';
@@ -10,6 +10,9 @@ import { evaluateProductAlertState } from '@/lib/inventory';
 const appStore = useAppStore();
 const toastStore = useToastStore();
 
+const itemsPerPage = 5;
+const currentPage = ref(1);
+
 onMounted(async () => {
   try {
     await appStore.fetchInventory();
@@ -19,6 +22,19 @@ onMounted(async () => {
 });
 
 const inventory = computed(() => appStore.inventory);
+
+const totalPages = computed(() => Math.ceil(inventory.value.length / itemsPerPage));
+
+const paginatedInventory = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return inventory.value.slice(start, start + itemsPerPage);
+});
+
+watch(inventory, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = Math.max(1, totalPages.value);
+  }
+});
 
 const formatUnitCost = (value) =>
   formatMoney(value, { locale: 'en-US', currency: 'USD', maximumFractionDigits: 2 });
@@ -72,7 +88,7 @@ function handleUmbralChange(item) {
           </thead>
           <tbody>
             <tr
-              v-for="item in inventory"
+              v-for="item in paginatedInventory"
               :key="item.id"
               class="table__row"
               :class="`inventory-row--${alertByItemId.get(item.id)?.alertClass ?? 'normal'}`"
@@ -109,6 +125,29 @@ function handleUmbralChange(item) {
             </tr>
           </tbody>
         </table>
+
+        <!-- Controles de Paginación -->
+        <div class="pagination-controls" v-if="totalPages > 1">
+          <button
+            class="btn btn--soft btn--sm"
+            type="button"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+          >
+            &larr; Anterior
+          </button>
+          <span class="pagination-info">
+            Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong>
+          </span>
+          <button
+            class="btn btn--soft btn--sm"
+            type="button"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+          >
+            Siguiente &rarr;
+          </button>
+        </div>
       </section>
       <p v-else class="empty-state">
         No hay insumos en el catálogo. Registre uno desde la sección "Registrar Insumos".
@@ -195,5 +234,26 @@ function handleUmbralChange(item) {
   padding: 40px 20px;
   text-align: center;
   color: rgba(61, 61, 61, 0.6);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
 }
 </style>
